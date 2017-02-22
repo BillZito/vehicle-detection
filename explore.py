@@ -41,17 +41,24 @@ if __name__ == '__main__':
 
     # Convert subsampled image to desired color space(s)
     img_small_RGB = cv2.cvtColor(img_small, cv2.COLOR_BGR2RGB)  # OpenCV uses BGR, matplotlib likes YUV
-    img_small_YUV = cv2.cvtColor(img_small, cv2.COLOR_BGR2YUV)  # OpenCV uses BGR, matplotlib likes YUV
-    img_small_YCrCb = cv2.cvtColor(img_small, cv2.COLOR_BGR2YCrCb)
-    img_small_HSV = cv2.cvtColor(img_small, cv2.COLOR_BGR2HSV)
+    # img_small_YUV = cv2.cvtColor(img_small, cv2.COLOR_BGR2YUV)  # OpenCV uses BGR, matplotlib likes YUV
+    # img_small_YCrCb = cv2.cvtColor(img_small, cv2.COLOR_BGR2YCrCb)
+    # img_small_HSV = cv2.cvtColor(img_small, cv2.COLOR_BGR2HSV)
+    img_small_LUV = cv2.cvtColor(img_small, cv2.COLOR_BGR2LUV)
+    img_small_HLS = cv2.cvtColor(img_small, cv2.COLOR_BGR2HLS)
+
     img_small_rgb = img_small_RGB / 255.  # scaled to [0, 1], only for plotting
 
     # Plot and show
-    plot3d(img_small_YUV, img_small_rgb, axis_labels=list("YUV"))
-    plt.show()
-
+    # plot3d(img_small_YUV, img_small_rgb, axis_labels=list("YUV"))
+    # plt.show()
     # plot3d(img_small_HSV, img_small_rgb, axis_labels=list("HSV"))
     # plt.show()
-
     # plot3d(img_small_YCrCb, img_small_rgb, axis_labels=list("Yrb"))
+    # plt.show()
+    # plot3d(img_small_LUV, img_small_rgb, axis_labels=list("LUV"))
+    # plt.show()
+    # plot3d(img_small_HLS, img_small_rgb, axis_labels=list("HLS"))
+    # plt.show()
+    # plot3d(img_small_RGB, img_small_rgb, axis_labels=list("RGB"))
     # plt.show()

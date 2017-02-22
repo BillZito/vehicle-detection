@@ -22,11 +22,11 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                        visualise=vis, feature_vector=feature_vec)
         return features
 
-# Define a function to compute binned color features  
+# Convert image to one-d feature fector (with resize based on bins) 
+# TODO: test if we can get the spatial resolution lower with same accuracy
 def bin_spatial(img, size=(32, 32)):
-    # Use cv2.resize().ravel() to create the feature vector
-    features = cv2.resize(img, size).ravel() 
-    # Return the feature vector
+    small_img = cv2.resize(img, size)
+    features = small_img.ravel()
     return features
 
 # Define a function to compute color histogram features 
@@ -158,16 +158,15 @@ def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
 get all of the hog features from lower half of the image
 TODO: apply to lower half
 '''
-from skimage.feature import hog
-orient = 0
-pix_per_cell = 8
-cell_per_block = 2
+# orient = 0
+# pix_per_cell = 8
+# cell_per_block = 2
 
 
-feature_array = hog(img, orientations=orient, \
-  pixels_per_cell=(pix_per_cell, pix_per_cell),\
-  cells_per_block=(cell_per_block, cell_per_block),\
-  visualize=False, feature_vector=False)
+# feature_array = hog(img, orientations=orient, \
+#   pixels_per_cell=(pix_per_cell, pix_per_cell),\
+#   cells_per_block=(cell_per_block, cell_per_block),\
+#   visualize=False, feature_vector=False)
 '''
 output feature_array has shape (n_yblocks, n_xblocks, 2, 2, 9)
 where n_yblocks and n_xblocks determined by shape of 

@@ -97,14 +97,37 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
     
     
 # Read in cars and notcars
-images = glob.glob('*.jpeg')
-cars = []
-notcars = []
-for image in images:
-    if 'image' in image or 'extra' in image:
-        notcars.append(image)
-    else:
-        cars.append(image)
+# images = glob.glob('*.jpeg')
+# cars = []
+# notcars = []
+# for image in images:
+#     if 'image' in image or 'extra' in image:
+#         notcars.append(image)
+#     else:
+#         cars.append(image)
+notcars = glob.glob('./data/non-vehicles/Extras/*.png') + glob.glob('./data/non-vehicles/GTI/*.png')
+# print('length not cars', len(notcars))
+cars = glob.glob('./data/vehicles/GTI_Far/*.png') + glob.glob('./data/vehicles/GTI_Left/*.png') \
++ glob.glob('./data/vehicles/GTI_MiddleClose/*.png') + glob.glob('./data/vehicles/GTI_Right/*.png') \
++ glob.glob('./data/vehicles/KITTI_extracted/*.png')
+# print('length cars', len(cars))
+
+car_ind = np.random.randint(0, len(cars))
+car_image = mpimg.imread(cars[car_ind])
+notcar_image = mpimg.imread(notcars[car_ind])
+print('we have', len(cars), 'cars and', len(notcars),\
+    ' non-cars')
+print('ofsize: ', car_image.shape, 'and data type', car_image.dtype)
+# data type is numpy array?
+fig = plt.figure()
+plt.subplot(121)
+plt.imshow(car_image)
+plt.title('example car')
+plt.subplot(122)
+plt.imshow(notcar_image)
+plt.title('example not-car')
+plt.show()
+
 
 # Reduce the sample size because
 # The quiz evaluator times out after 13s of CPU time
@@ -123,8 +146,9 @@ hist_bins = 40    # Number of histogram bins
 spatial_feat = True # Spatial features on or off
 hist_feat = True # Histogram features on or off
 hog_feat = True # HOG features on or off
-rando_img = mpimg.imread('bbox-example-image.jpg')
-height = rando_img.shape[0]
+# rando_img = mpimg.imread('bbox-example-image.jpg')
+height = 100
+# height = rando_img.shape[0]
 # print('height', height)
 y_start_stop = [int(height*5//8), height] # Min and max in y to search in slide_window()
 # print('ystartstop', y_start_stop)
