@@ -118,22 +118,23 @@ notcar_image = mpimg.imread(notcars[car_ind])
 print('we have', len(cars), 'cars and', len(notcars),\
     ' non-cars')
 print('ofsize: ', car_image.shape, 'and data type', car_image.dtype)
-# data type is numpy array?
-fig = plt.figure()
-plt.subplot(121)
-plt.imshow(car_image)
-plt.title('example car')
-plt.subplot(122)
-plt.imshow(notcar_image)
-plt.title('example not-car')
-plt.show()
+
+# if want to visualize car/not car, uncomment
+# fig = plt.figure()
+# plt.subplot(121)
+# plt.imshow(car_image)
+# plt.title('example car')
+# plt.subplot(122)
+# plt.imshow(notcar_image)
+# plt.title('example not-car')
+# plt.show()
 
 
 # Reduce the sample size because
 # The quiz evaluator times out after 13s of CPU time
-sample_size = 500
-cars = cars[0:sample_size]
-notcars = notcars[0:sample_size]
+# sample_size = 500
+# cars = cars[0:sample_size]
+# notcars = notcars[0:sample_size]
 
 ### TODO: Tweak these parameters and see how the results change.
 color_space = 'YUV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
@@ -147,8 +148,8 @@ spatial_feat = True # Spatial features on or off
 hist_feat = True # Histogram features on or off
 hog_feat = True # HOG features on or off
 # rando_img = mpimg.imread('bbox-example-image.jpg')
-height = 100
-# height = rando_img.shape[0]
+# height = 100
+height = car_image.shape[0]
 # print('height', height)
 y_start_stop = [int(height*5//8), height] # Min and max in y to search in slide_window()
 # print('ystartstop', y_start_stop)
@@ -172,14 +173,15 @@ X_scaler = StandardScaler().fit(X)
 # Apply the scaler to X
 scaled_X = X_scaler.transform(X)
 
-# Define the labels vector
+# Define the labels vector (stack horizontally)
 y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
 
 
 # Split up data into randomized training and test sets
-rand_state = np.random.randint(0, 100)
+# rand_state = np.random.randint(0, 100)
 X_train, X_test, y_train, y_test = train_test_split(
-    scaled_X, y, test_size=0.2, random_state=rand_state)
+    scaled_X, y, test_size=0.2, random_state=88)
+# random_state = rand_state
 
 print('Using:',orient,'orientations',pix_per_cell,
     'pixels per cell and', cell_per_block,'cells per block')
@@ -187,7 +189,7 @@ print('Feature vector length:', len(X_train[0]))
 # Use a linear SVC 
 svc = LinearSVC()
 # Check the training time for the SVC
-t=time.time()
+t = time.time()
 svc.fit(X_train, y_train)
 t2 = time.time()
 print(round(t2-t, 2), 'Seconds to train SVC...')
@@ -196,7 +198,7 @@ print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
 # Check the prediction time for a single sample
 t=time.time()
 
-image = mpimg.imread('bbox-example-image.jpg')
+image = mpimg.imread('test_images/test4.jpg')
 draw_image = np.copy(image)
 
 # Uncomment the following line if you extracted training

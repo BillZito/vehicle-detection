@@ -10,16 +10,18 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
         features, hog_image = hog(img, orientations=orient, 
                                   pixels_per_cell=(pix_per_cell, pix_per_cell),
                                   cells_per_block=(cell_per_block, cell_per_block), 
-                                  transform_sqrt=True, 
+                                  transform_sqrt=False, 
                                   visualise=vis, feature_vector=feature_vec)
+        #TODO: set transform_sqrt=True and remove neg numb
         return features, hog_image
     # Otherwise call with one output
     else:      
         features = hog(img, orientations=orient, 
                        pixels_per_cell=(pix_per_cell, pix_per_cell),
                        cells_per_block=(cell_per_block, cell_per_block), 
-                       transform_sqrt=True, 
+                       transform_sqrt=False, 
                        visualise=vis, feature_vector=feature_vec)
+        #TODO: set transform_sqrt=True and remove neg numb
         return features
 
 # Convert image to one-d feature fector (with resize based on bins) 
@@ -129,7 +131,7 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
     y_start = xy_window[1]
     for x_window in range(0, x_windows):
         x_pos = int(x_start + x_window * x_step)
-        print('first', x_pos - x_start)
+        # print('first', x_pos - x_start)
         x_first = x_pos - x_start
         for y_window in range(0, y_windows):
         # Calculate each window position
