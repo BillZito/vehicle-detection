@@ -1,6 +1,7 @@
 import cv2
 import glob
 import time
+import pickle
 import numpy as np
 from skimage.feature import hog
 import matplotlib.pyplot as plt
@@ -220,4 +221,12 @@ window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)
 
 plt.imshow(window_img)
 
+
+# save image
+# output_file = open('trained_model.pkl', 'wb')
+# saved = pickle.dump(svc, output_file)
+
+load_file = open('trained_model.pkl', 'rb')
+reloaded = pickle.load(load_file)
+print('after save, Test Accuracy of SVC = ', round(reloaded.score(X_test, y_test), 4))
 
