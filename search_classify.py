@@ -96,137 +96,141 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
     #8) Return windows for positive detections
     return on_windows
     
+if __name__ == '__main__':
+    color_space = 'YUV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+    orient = 9  # HOG orientations
+    pix_per_cell = 8 # HOG pixels per cell
+    cell_per_block = 2 # HOG cells per block
+    hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
+    spatial_size = (20, 20) # Spatial binning dimensions
+    hist_bins = 40    # Number of histogram bins
+    spatial_feat = False # Spatial features on or off
+    hist_feat = False # Histogram features on or off
+    hog_feat = True # HOG features on or off
+
+    # number of model
+    num = '3'
+    mini = True
+    # boolean for training svm model or just doing sliding windows functionality
+    needs_training = False
+    if needs_training:
+
     
-# Read in cars and notcars
-# images = glob.glob('*.jpeg')
-# cars = []
-# notcars = []
-# for image in images:
-#     if 'image' in image or 'extra' in image:
-#         notcars.append(image)
-#     else:
-#         cars.append(image)
-notcars = glob.glob('./data/non-vehicles/Extras/*.png') + glob.glob('./data/non-vehicles/GTI/*.png')
-# print('length not cars', len(notcars))
-cars = glob.glob('./data/vehicles/GTI_Far/*.png') + glob.glob('./data/vehicles/GTI_Left/*.png') \
-+ glob.glob('./data/vehicles/GTI_MiddleClose/*.png') + glob.glob('./data/vehicles/GTI_Right/*.png') \
-+ glob.glob('./data/vehicles/KITTI_extracted/*.png')
-# print('length cars', len(cars))
+        notcars = glob.glob('./data/non-vehicles/Extras/*.png') + glob.glob('./data/non-vehicles/GTI/*.png')
+        # print('length not cars', len(notcars))
+        cars = glob.glob('./data/vehicles/GTI_Far/*.png') + glob.glob('./data/vehicles/GTI_Left/*.png') \
+        + glob.glob('./data/vehicles/GTI_MiddleClose/*.png') + glob.glob('./data/vehicles/GTI_Right/*.png') \
+        + glob.glob('./data/vehicles/KITTI_extracted/*.png')
+        # print('length cars', len(cars))
 
-car_ind = np.random.randint(0, len(cars))
-car_image = mpimg.imread(cars[car_ind])
-notcar_image = mpimg.imread(notcars[car_ind])
-print('we have', len(cars), 'cars and', len(notcars),\
-    ' non-cars')
-print('ofsize: ', car_image.shape, 'and data type', car_image.dtype)
+        car_ind = np.random.randint(0, len(cars))
+        car_image = mpimg.imread(cars[car_ind])
+        notcar_image = mpimg.imread(notcars[car_ind])
+        print('we have', len(cars), 'cars and', len(notcars),\
+            ' non-cars')
+        print('ofsize: ', car_image.shape, 'and data type', car_image.dtype)
 
-# if want to visualize car/not car, uncomment
-# fig = plt.figure()
-# plt.subplot(121)
-# plt.imshow(car_image)
-# plt.title('example car')
-# plt.subplot(122)
-# plt.imshow(notcar_image)
-# plt.title('example not-car')
-# plt.show()
+        # if want to visualize car/not car, uncomment
+        # fig = plt.figure()
+        # plt.subplot(121)
+        # plt.imshow(car_image)
+        # plt.title('example car')
+        # plt.subplot(122)
+        # plt.imshow(notcar_image)
+        # plt.title('example not-car')
+        # plt.show()
 
+        if mini:
+            sample_size = 500
+            cars = cars[0:sample_size]
+            notcars = notcars[0:sample_size]
 
-# Reduce the sample size because
-# The quiz evaluator times out after 13s of CPU time
-# sample_size = 500
-# cars = cars[0:sample_size]
-# notcars = notcars[0:sample_size]
+        car_features = extract_features(cars, color_space=color_space, 
+                                spatial_size=spatial_size, hist_bins=hist_bins, 
+                                orient=orient, pix_per_cell=pix_per_cell, 
+                                cell_per_block=cell_per_block, 
+                                hog_channel=hog_channel, spatial_feat=spatial_feat, 
+                                hist_feat=hist_feat, hog_feat=hog_feat)
+        notcar_features = extract_features(notcars, color_space=color_space, 
+                                spatial_size=spatial_size, hist_bins=hist_bins, 
+                                orient=orient, pix_per_cell=pix_per_cell, 
+                                cell_per_block=cell_per_block, 
+                                hog_channel=hog_channel, spatial_feat=spatial_feat, 
+                                hist_feat=hist_feat, hog_feat=hog_feat)
 
-### TODO: Tweak these parameters and see how the results change.
-color_space = 'YUV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
-orient = 9  # HOG orientations
-pix_per_cell = 8 # HOG pixels per cell
-cell_per_block = 2 # HOG cells per block
-hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
-spatial_size = (20, 20) # Spatial binning dimensions
-hist_bins = 40    # Number of histogram bins
-spatial_feat = True # Spatial features on or off
-hist_feat = True # Histogram features on or off
-hog_feat = True # HOG features on or off
-# rando_img = mpimg.imread('bbox-example-image.jpg')
-# height = 100
-height = car_image.shape[0]
-# print('height', height)
-y_start_stop = [int(height*5//8), height] # Min and max in y to search in slide_window()
-# print('ystartstop', y_start_stop)
+        X = np.vstack((car_features, notcar_features)).astype(np.float64)                        
+        # Fit a per-column scaler
+        X_scaler = StandardScaler().fit(X)
+        # Apply the scaler to X
+        scaled_X = X_scaler.transform(X)
+    
+        # Define the labels vector (stack horizontally)
+        y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
 
-car_features = extract_features(cars, color_space=color_space, 
-                        spatial_size=spatial_size, hist_bins=hist_bins, 
-                        orient=orient, pix_per_cell=pix_per_cell, 
-                        cell_per_block=cell_per_block, 
-                        hog_channel=hog_channel, spatial_feat=spatial_feat, 
-                        hist_feat=hist_feat, hog_feat=hog_feat)
-notcar_features = extract_features(notcars, color_space=color_space, 
-                        spatial_size=spatial_size, hist_bins=hist_bins, 
-                        orient=orient, pix_per_cell=pix_per_cell, 
-                        cell_per_block=cell_per_block, 
-                        hog_channel=hog_channel, spatial_feat=spatial_feat, 
-                        hist_feat=hist_feat, hog_feat=hog_feat)
+        # Split up data into randomized training and test sets
+        # rand_state = np.random.randint(0, 100)
+        X_train, X_test, y_train, y_test = train_test_split(
+            scaled_X, y, test_size=0.2, random_state=88)
+        # random_state = rand_state
 
-X = np.vstack((car_features, notcar_features)).astype(np.float64)                        
-# Fit a per-column scaler
-X_scaler = StandardScaler().fit(X)
-# Apply the scaler to X
-scaled_X = X_scaler.transform(X)
+        print('Using:',orient,'orientations',pix_per_cell,
+            'pixels per cell and', cell_per_block,'cells per block')
+        print('Feature vector length:', len(X_train[0]))
+        # Use a linear SVC 
+        svc = LinearSVC()
+        # Check the training time for the SVC
+        t = time.time()
+        svc.fit(X_train, y_train)
+        t2 = time.time()
+        print(round(t2-t, 2), 'Seconds to train SVC...')
+        # Check the score of the SVC
+        print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
+        # Check the prediction time for a single sample
+        # t = time.time()
+        
+        # save image
+        output_svc = open('models/trained_model' + num + '.pkl', 'wb')
+        pickle.dump(svc, output_svc)
 
-# Define the labels vector (stack horizontally)
-y = np.hstack((np.ones(len(car_features)), np.zeros(len(notcar_features))))
+        # save scaler
+        output_scaler = open('models/x_scaler' + num + '.pkl', 'wb')
+        pickle.dump(X_scaler, output_scaler)
 
+    else: 
+        load_svc = open('models/trained_model' + num + '.pkl', 'rb')
+        svc = pickle.load(load_svc)
 
-# Split up data into randomized training and test sets
-# rand_state = np.random.randint(0, 100)
-X_train, X_test, y_train, y_test = train_test_split(
-    scaled_X, y, test_size=0.2, random_state=88)
-# random_state = rand_state
-
-print('Using:',orient,'orientations',pix_per_cell,
-    'pixels per cell and', cell_per_block,'cells per block')
-print('Feature vector length:', len(X_train[0]))
-# Use a linear SVC 
-svc = LinearSVC()
-# Check the training time for the SVC
-t = time.time()
-svc.fit(X_train, y_train)
-t2 = time.time()
-print(round(t2-t, 2), 'Seconds to train SVC...')
-# Check the score of the SVC
-print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
-# Check the prediction time for a single sample
-t=time.time()
-
-image = mpimg.imread('test_images/test4.jpg')
-draw_image = np.copy(image)
-
-# Uncomment the following line if you extracted training
-# data from .png images (scaled 0 to 1 by mpimg) and the
-# image you are searching is a .jpg (scaled 0 to 255)
-#image = image.astype(np.float32)/255
-
-windows = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop, 
-                    xy_window=(96, 96), xy_overlap=(0.5, 0.5))
-
-hot_windows = search_windows(image, windows, svc, X_scaler, color_space=color_space, 
-                        spatial_size=spatial_size, hist_bins=hist_bins, 
-                        orient=orient, pix_per_cell=pix_per_cell, 
-                        cell_per_block=cell_per_block, 
-                        hog_channel=hog_channel, spatial_feat=spatial_feat, 
-                        hist_feat=hist_feat, hog_feat=hog_feat)                       
-
-window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)                    
-
-plt.imshow(window_img)
+        load_scaler = open('models/x_scaler' + num + '.pkl', 'rb')
+        X_scaler = pickle.load(load_scaler)
+        # run below to check accuracy, but have to change code to load X_test images
+        # print('after save, Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
+        # taken from one of images originally
 
 
-# save image
-# output_file = open('trained_model.pkl', 'wb')
-# saved = pickle.dump(svc, output_file)
+    image = mpimg.imread('test_images/test4.jpg')
+    # print('image shape', image.shape[0])
+    height = image.shape[0]
+    y_start_stop = [int(height*5//8), height]
+    # print('ystart stop', y_start_stop)
 
-load_file = open('trained_model.pkl', 'rb')
-reloaded = pickle.load(load_file)
-print('after save, Test Accuracy of SVC = ', round(reloaded.score(X_test, y_test), 4))
+    draw_image = np.copy(image)
 
+    # Uncomment the following line if you extracted training
+    # data from .png images (scaled 0 to 1 by mpimg) and the
+    # image you are searching is a .jpg (scaled 0 to 255)
+    #image = image.astype(np.float32)/255
+
+    windows = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop, 
+                        xy_window=(96, 96), xy_overlap=(0.5, 0.5))
+
+    hot_windows = search_windows(image, windows, svc, X_scaler, color_space=color_space, 
+                            spatial_size=spatial_size, hist_bins=hist_bins, 
+                            orient=orient, pix_per_cell=pix_per_cell, 
+                            cell_per_block=cell_per_block, 
+                            hog_channel=hog_channel, spatial_feat=spatial_feat, 
+                            hist_feat=hist_feat, hog_feat=hog_feat)                       
+
+    window_img = draw_boxes(draw_image, hot_windows, color=(0, 0, 255), thick=6)                    
+
+    plt.imshow(window_img)
+    plt.show()

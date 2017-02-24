@@ -97,6 +97,51 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
     
 # Define a function that takes an image, start and stop positions in both x and y, 
 # window size (x and y dimensions), and overlap fraction (for both x and y)
+# def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None], 
+#                     xy_window=(64, 64), xy_overlap=(0.5, 0.5)):
+#     # If x and/or y start/stop positions not defined, set to image size
+#     if x_start_stop[0] == None:
+#         x_start_stop[0] = 0
+#     if x_start_stop[1] == None:
+#         x_start_stop[1] = img.shape[1]
+#     if y_start_stop[0] == None:
+#         y_start_stop[0] = 0
+#     if y_start_stop[1] == None:
+#         y_start_stop[1] = img.shape[0]
+
+#     # Compute the span of the region to be searched    
+#     x_span = x_start_stop[1] - x_start_stop[0]
+#     y_span = y_start_stop[1] - y_start_stop[0]
+    
+
+#     # Compute the number of pixels per step in x/y
+#     x_step = xy_overlap[0] * xy_window[0]
+#     y_step = xy_overlap[1] * xy_window[1]
+
+#     # Compute the number of windows in x/y
+#     x_windows = int(((x_span - xy_window[0]) // x_step) + 1)
+#     y_windows = int(((y_span - xy_window[1]) // y_step) + 1)
+
+#     total_windows = x_windows * y_windows
+    
+#     # Initialize a list to append window positions to
+#     window_list = []
+#     # Loop through finding x and y window positions
+#     x_start = xy_window[0]
+#     y_start = xy_window[1]
+#     for x_window in range(0, x_windows):
+#         x_pos = int(x_start + x_window * x_step)
+#         # print('first', x_pos - x_start)
+#         x_first = x_pos - x_start
+#         for y_window in range(0, y_windows):
+#         # Calculate each window position
+#             y_pos = int(y_start + y_window * y_step)
+#             y_first = y_pos - y_start
+#             # print('xpos ypos', ((x_first, y_first), (x_pos, y_pos)))
+#             window_list.append(((x_first, y_first), (x_pos, y_pos)))
+
+#     return window_list
+
 def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None], 
                     xy_window=(64, 64), xy_overlap=(0.5, 0.5)):
     # If x and/or y start/stop positions not defined, set to image size
@@ -108,39 +153,37 @@ def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None],
         y_start_stop[0] = 0
     if y_start_stop[1] == None:
         y_start_stop[1] = img.shape[0]
-
     # Compute the span of the region to be searched    
-    x_span = x_start_stop[1] - x_start_stop[0]
-    y_span = y_start_stop[1] - y_start_stop[0]
-    
-
+    xspan = x_start_stop[1] - x_start_stop[0]
+    yspan = y_start_stop[1] - y_start_stop[0]
     # Compute the number of pixels per step in x/y
-    x_step = xy_overlap[0] * xy_window[0]
-    y_step = xy_overlap[1] * xy_window[1]
-
+    nx_pix_per_step = np.int(xy_window[0]*(1 - xy_overlap[0]))
+    ny_pix_per_step = np.int(xy_window[1]*(1 - xy_overlap[1]))
     # Compute the number of windows in x/y
-    x_windows = int(((x_span - xy_window[0]) // x_step) + 1)
-    y_windows = int(((y_span - xy_window[1]) // y_step) + 1)
-
-    total_windows = x_windows * y_windows
-    
+    nx_buffer = np.int(xy_window[0]*(xy_overlap[0]))
+    ny_buffer = np.int(xy_window[1]*(xy_overlap[1]))
+    nx_windows = np.int((xspan-nx_buffer)/nx_pix_per_step) 
+    ny_windows = np.int((yspan-nx_buffer)/ny_pix_per_step) 
     # Initialize a list to append window positions to
     window_list = []
     # Loop through finding x and y window positions
-    x_start = xy_window[0]
-    y_start = xy_window[1]
-    for x_window in range(0, x_windows):
-        x_pos = int(x_start + x_window * x_step)
-        # print('first', x_pos - x_start)
-        x_first = x_pos - x_start
-        for y_window in range(0, y_windows):
-        # Calculate each window position
-            y_pos = int(y_start + y_window * y_step)
-            y_first = y_pos - y_start
-            # print('xpos ypos', ((x_first, y_first), (x_pos, y_pos)))
-            window_list.append(((x_first, y_first), (x_pos, y_pos)))
-
+    # Note: you could vectorize this step, but in practice
+    # you'll be considering windows one by one with your
+    # classifier, so looping makes sense
+    for ys in range(ny_windows):
+        for xs in range(nx_windows):
+            # Calculate window position
+            startx = xs*nx_pix_per_step + x_start_stop[0]
+            endx = startx + xy_window[0]
+            starty = ys*ny_pix_per_step + y_start_stop[0]
+            endy = starty + xy_window[1]
+            
+            # Append window position to list
+            window_list.append(((startx, starty), (endx, endy)))
+    # Return the list of windows
     return window_list
+
+
 
 # Define a function to draw bounding boxes
 def draw_boxes(img, bboxes, color=(0, 0, 255), thick=6):
