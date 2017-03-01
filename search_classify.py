@@ -97,19 +97,19 @@ def search_windows(img, windows, clf, scaler, color_space='RGB',
     return on_windows
     
 if __name__ == '__main__':
-    color_space = 'YUV' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+    color_space = 'RGB' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
     orient = 9  # HOG orientations
     pix_per_cell = 8 # HOG pixels per cell
     cell_per_block = 2 # HOG cells per block
     hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
-    spatial_size = (20, 20) # Spatial binning dimensions
+    spatial_size = (32, 32) # Spatial binning dimensions
     hist_bins = 40    # Number of histogram bins
     spatial_feat = False # Spatial features on or off
     hist_feat = False # Histogram features on or off
     hog_feat = True # HOG features on or off
 
     # number of model
-    num = '4'
+    num = '8'
     mini = False
     # boolean for training svm model or just doing sliding windows functionality
     needs_training = True
@@ -157,6 +157,8 @@ if __name__ == '__main__':
                                 cell_per_block=cell_per_block, 
                                 hog_channel=hog_channel, spatial_feat=spatial_feat, 
                                 hist_feat=hist_feat, hog_feat=hog_feat)
+        print('car features shape', car_features.shape)
+        print('notcar featuers shape', notcar_features.shape)
 
         X = np.vstack((car_features, notcar_features)).astype(np.float64)                        
         # Fit a per-column scaler
@@ -187,6 +189,7 @@ if __name__ == '__main__':
         print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
         # Check the prediction time for a single sample
         # t = time.time()
+
         
         # save image
         output_svc = open('models/trained_model' + num + '.pkl', 'wb')
@@ -206,7 +209,7 @@ if __name__ == '__main__':
         # print('after save, Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
         # taken from one of images originally
 
-
+    # image = mpimg.imread('data/vehicles/GTI_Far/image0000.png')
     image = mpimg.imread('test_images/test4.jpg')
     # print('image shape', image.shape[0])
     height = image.shape[0]
@@ -218,7 +221,7 @@ if __name__ == '__main__':
     # Uncomment the following line if you extracted training
     # data from .png images (scaled 0 to 1 by mpimg) and the
     # image you are searching is a .jpg (scaled 0 to 255)
-    image = image.astype(np.float32)/255
+    # image = image.astype(np.float32)/255
 
     windows = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop, 
                         xy_window=(96, 96), xy_overlap=(0.5, 0.5))
