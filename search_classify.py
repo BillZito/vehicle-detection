@@ -112,7 +112,7 @@ if __name__ == '__main__':
     num = '8'
     mini = False
     # boolean for training svm model or just doing sliding windows functionality
-    needs_training = True
+    needs_training = False
     if needs_training:
 
     
@@ -157,8 +157,6 @@ if __name__ == '__main__':
                                 cell_per_block=cell_per_block, 
                                 hog_channel=hog_channel, spatial_feat=spatial_feat, 
                                 hist_feat=hist_feat, hog_feat=hog_feat)
-        print('car features shape', car_features.shape)
-        print('notcar featuers shape', notcar_features.shape)
 
         X = np.vstack((car_features, notcar_features)).astype(np.float64)                        
         # Fit a per-column scaler
@@ -213,7 +211,7 @@ if __name__ == '__main__':
     image = mpimg.imread('test_images/test4.jpg')
     # print('image shape', image.shape[0])
     height = image.shape[0]
-    y_start_stop = [int(height*5//8), height]
+    y_start_stop = [int(height*4//8), height]
     # print('ystart stop', y_start_stop)
 
     draw_image = np.copy(image)
