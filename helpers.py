@@ -2,7 +2,17 @@ import matplotlib.image as mpimg
 import numpy as np
 import cv2
 from skimage.feature import hog
-# Define a function to return HOG features and visualization
+
+'''
+input: image, HOG orientations, pixels per cell, cells per block (for normalization)
+visualize def. false, feature vec (all along single access True)
+
+output: the features (and potentially the hog image itself)
+
+TODO: 
+1. change this to only do bottom half
+2. set transform_sqrt=True and remove neg numb
+'''
 def get_hog_features(img, orient, pix_per_cell, cell_per_block, 
                         vis=False, feature_vec=True):
     # Call with two outputs if vis==True
@@ -24,15 +34,20 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
         #TODO: set transform_sqrt=True and remove neg numb
         return features
 
-# Convert image to one-d feature fector (with resize based on bins) 
-# TODO: test if we can get the spatial resolution lower with same accuracy
+'''
+Convert image to one-d feature fector (with resize based on bins)--getting super small sample of img
+
+TODO: test if we can get the spatial resolution lower with same accuracy-have tried 20/20
+'''
 def bin_spatial(img, size=(32, 32)):
     small_img = cv2.resize(img, size)
     features = small_img.ravel()
     return features
 
-# Define a function to compute color histogram features 
-# NEED TO CHANGE bins_range if reading .png files with mpimg!
+'''
+Define a function to compute color histogram features 
+NEED TO CHANGE bins_range if reading .png files with mpimg!
+'''
 def color_hist(img, nbins=32, bins_range=(0, 256)):
     # Compute the histogram of the color channels separately
     channel1_hist = np.histogram(img[:,:,0], bins=nbins, range=bins_range)
@@ -43,8 +58,10 @@ def color_hist(img, nbins=32, bins_range=(0, 256)):
     # Return the individual histograms, bin_centers and feature vector
     return hist_features
 
-# Define a function to extract features from a list of images
-# Have this function call bin_spatial() and color_hist()
+'''
+Define a function to extract features from a list of images
+Have this function call bin_spatial() and color_hist()
+'''
 def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
                         hist_bins=32, orient=9, 
                         pix_per_cell=8, cell_per_block=2, hog_channel=0,
@@ -95,6 +112,7 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
     # Return list of feature vectors
     return features
     
+#TOOD: use my code with switched x and r col/row
 # Define a function that takes an image, start and stop positions in both x and y, 
 # window size (x and y dimensions), and overlap fraction (for both x and y)
 # def slide_window(img, x_start_stop=[None, None], y_start_stop=[None, None], 

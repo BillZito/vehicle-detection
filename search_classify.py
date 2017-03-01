@@ -109,10 +109,10 @@ if __name__ == '__main__':
     hog_feat = True # HOG features on or off
 
     # number of model
-    num = '3'
-    mini = True
+    num = '4'
+    mini = False
     # boolean for training svm model or just doing sliding windows functionality
-    needs_training = False
+    needs_training = True
     if needs_training:
 
     
@@ -218,7 +218,7 @@ if __name__ == '__main__':
     # Uncomment the following line if you extracted training
     # data from .png images (scaled 0 to 1 by mpimg) and the
     # image you are searching is a .jpg (scaled 0 to 255)
-    #image = image.astype(np.float32)/255
+    image = image.astype(np.float32)/255
 
     windows = slide_window(image, x_start_stop=[None, None], y_start_stop=y_start_stop, 
                         xy_window=(96, 96), xy_overlap=(0.5, 0.5))
