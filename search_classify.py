@@ -146,13 +146,14 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             # Get color features
             spatial_features = bin_spatial(subimg, size=spatial_size)
             hist_features = color_hist(subimg, nbins=hist_bins)
-            print('spatial', spatial_features.shape)
-            print('hist', hist_features.shape)
-            print('hog', hog_features.shape)
+            # print('spatial', spatial_features.shape)
+            # print('hist', hist_features.shape)
+            # print('hog', hog_features.shape)
             # Scale features and make a prediction
-            test1 = np.hstack((spatial_features, hog_features)).reshape(1, -1)
-            print('test1', test1.shape)
-            test_features = X_scaler.transform(np.hstack((spatial_features, hog_features)).reshape(1, -1))    
+            # test1 = np.hstack((spatial_features, hog_features)).reshape(1, -1)
+            # print('test1', test1.shape)
+            test_features = X_scaler.transform(np.hstack((hog_features)).reshape(1, -1))
+            # test_features = X_scaler.transform(np.hstack((spatial_features, hog_features)).reshape(1, -1))    
             # test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))    
             #test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))    
             test_prediction = svc.predict(test_features)
@@ -173,15 +174,15 @@ if __name__ == '__main__':
     hog_channel = "ALL" # Can be 0, 1, 2, or "ALL"
     spatial_size = (32, 32) # Spatial binning dimensions
     hist_bins = 32    # Number of histogram bins
-    spatial_feat = True # Spatial features on or off
-    hist_feat = True # Histogram features on or off
+    spatial_feat = False # Spatial features on or off
+    hist_feat = False # Histogram features on or off
     hog_feat = True # HOG features on or off
 
     # number of model
-    num = '11'
+    num = '10'
     mini = False
     # boolean for training svm model or just doing sliding windows functionality
-    needs_training = True
+    needs_training = False
     if needs_training:
 
     
@@ -311,5 +312,5 @@ if __name__ == '__main__':
 
 
     # plt.imshow(window_img)
-    plit.imshow(out_img)
+    plt.imshow(out_img)
     plt.show()
