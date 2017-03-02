@@ -47,6 +47,8 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     hog2 = get_hog_features(ch2, orient, pix_per_cell, cell_per_block, feature_vec=False)
     hog3 = get_hog_features(ch3, orient, pix_per_cell, cell_per_block, feature_vec=False)
     
+    window_list = []
+
     for xb in range(nxsteps):
         for yb in range(nysteps):
             ypos = yb*cells_per_step
@@ -82,8 +84,27 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 ytop_draw = np.int(ytop*scale)
                 win_draw = np.int(window*scale)
                 cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6) 
-                
-    return draw_img
+                window_list.append(((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)))
+
+    return draw_img, window_list
+
+    '''
+    Combine duplicate bounding boxes and remove false positives.
+    1. add a pixel val for each bounding box found using a heatmap
+    2. apply a threshold on number of pixel vals to remove false positives (if only a few bounding boxes)
+    3. label the bounding boxes using scipy to identify separate boxes
+    4. apply new bounding boxes to each of labeled boxes
+    '''
+
+    '''
+    given an image, add a pixel val for each place place in the bounding box
+    '''
+def increment_heatmap(heatmap, bbox_list):
+    for bbox in bbox_list:
+        #each bbox is of form (x1, y1), (x2, y2)
+        #increment the pixel val by 1
+        heatmap[bbox[0][1]:bbox[1][1], bbox[0][0]:bbox[1][0]] += 1
+    return heatmap
 
 # Define a function to extract features from a single image window
 # This function is very similar to extract_features()
@@ -307,10 +328,18 @@ if __name__ == '__main__':
     # ystop = 656
     scale = 1.5
     
-    out_img = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    # plt.imshow(out_img)
+    # plt.title('boxes')
+    # plt.show()
 
+    zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
+    # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
+    # plt.imshow(zero_img)
+    # plt.title('empty')
+    # plt.show()
 
-
-    # plt.imshow(window_img)
-    plt.imshow(out_img)
+    heatmap = increment_heatmap(zero_img, bboxes)
+    plt.imshow(heatmap)
+    plt.title('heatmap')
     plt.show()
