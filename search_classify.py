@@ -81,6 +81,8 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 xbox_left = np.int(xleft*scale)
                 ytop_draw = np.int(ytop*scale)
                 win_draw = np.int(window*scale)
+                bbox = ((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart))
+                # print('bbox', bbox[0], bbox[1])
                 cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6) 
                 window_list.append(((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)))
 
@@ -120,15 +122,15 @@ def box_labels(img, labels):
         # get the vals that apply just to that label
         curr_points = (labels[0] == label).nonzero()
         # print('length', len(curr_points))
-        nonzero_x = np.array(curr_points[0])
+        nonzero_y = np.array(curr_points[0])
         # print('x', nonzero_x.shape)
-        nonzero_y = np.array(curr_points[1])
+        nonzero_x = np.array(curr_points[1])
         # print('y', nonzero_y.shape)
         # draw a box on the orig image with min and max vals
         # of form: x1, y1, x2, y2
         # if (nonzero_x.shape[0] > 0):
         bbox = ((np.min(nonzero_x), np.min(nonzero_y)), (np.max(nonzero_x), np.max(nonzero_y)))
-        print('bbox', bbox)
+        # print('bbox', bbox[0], bbox[1])
         cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
 
     return img
@@ -325,7 +327,7 @@ if __name__ == '__main__':
         # taken from one of images originally
 
     # image = mpimg.imread('data/vehicles/GTI_Far/image0000.png')
-    image = mpimg.imread('test_images/test5.jpg')
+    image = mpimg.imread('test_images/test1.jpg')
     # print('image shape', image.shape[0])
     height = image.shape[0]
     y_start_stop = [int(height*4//8), height]
@@ -355,9 +357,9 @@ if __name__ == '__main__':
     scale = 1.5
     
     out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-    # plt.imshow(out_img)
-    # plt.title('boxes')
-    # plt.show()
+    plt.imshow(out_img)
+    plt.title('boxes')
+    plt.show()
 
     zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
     # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
