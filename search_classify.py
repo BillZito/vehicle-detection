@@ -3,17 +3,15 @@ import glob
 import time
 import pickle
 import numpy as np
-from skimage.feature import hog
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from scipy.ndimage.measurements import label
+from skimage.feature import hog
 from sklearn.svm import LinearSVC
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 from helpers import *
-# NOTE: the next import is only valid for scikit-learn version <= 0.17
-# from sklearn.cross_validation import train_test_split
-# for scikit-learn >= 0.18 use:
-from sklearn.model_selection import train_test_split
 
     
 def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
@@ -113,6 +111,27 @@ def apply_thresh(heatmap, thresh):
     heatmap[heatmap <= thresh] = 0
     return heatmap
 
+'''
+apply new bounding boxes based on the labeled boxes
+'''
+def box_labels(img, labels):
+    # for number of labels
+    for label in range(1, labels[1] + 1):
+        # get the vals that apply just to that label
+        curr_points = (labels[0] == label).nonzero()
+        # print('length', len(curr_points))
+        nonzero_x = np.array(curr_points[0])
+        # print('x', nonzero_x.shape)
+        nonzero_y = np.array(curr_points[1])
+        # print('y', nonzero_y.shape)
+        # draw a box on the orig image with min and max vals
+        # of form: x1, y1, x2, y2
+        # if (nonzero_x.shape[0] > 0):
+        bbox = ((np.min(nonzero_x), np.min(nonzero_y)), (np.max(nonzero_x), np.max(nonzero_y)))
+        print('bbox', bbox)
+        cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
+
+    return img
 # Define a function to extract features from a single image window
 # This function is very similar to extract_features()
 # just for a single image rather than list of images
@@ -336,9 +355,9 @@ if __name__ == '__main__':
     scale = 1.5
     
     out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-    plt.imshow(out_img)
-    plt.title('boxes')
-    plt.show()
+    # plt.imshow(out_img)
+    # plt.title('boxes')
+    # plt.show()
 
     zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
     # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
@@ -347,11 +366,19 @@ if __name__ == '__main__':
     # plt.show()
 
     heatmap = increment_heatmap(zero_img, bboxes)
-    plt.imshow(heatmap)
-    plt.title('heatmap')
-    plt.show()
+    # plt.imshow(heatmap)
+    # plt.title('heatmap')
+    # plt.show()
 
     threshed_heat = apply_thresh(heatmap, 2)
-    plt.imshow(threshed_heat)
-    plt.title('threshed heatmap')
+    # plt.imshow(threshed_heat)
+    # plt.title('threshed heatmap')
+    # plt.show()
+
+    # apply label() to get [heatmap_w/_labels, num_labels]
+    labels = label(threshed_heat)
+    # print("labels", labels[1])
+    labeled_image = box_labels(image, labels)
+    plt.imshow(labeled_image)
+    plt.title('with labeled cars')
     plt.show()
