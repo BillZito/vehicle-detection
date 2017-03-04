@@ -1,12 +1,12 @@
 import cv2
 import glob
 import time
-import queue
 import pickle
 import numpy as np
-from moviepy.editor import VideoFileClip
+from collections import deque
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
+from moviepy.editor import VideoFileClip
 from scipy.ndimage.measurements import label
 from skimage.feature import hog
 from sklearn.svm import LinearSVC
@@ -140,17 +140,17 @@ def box_labels(img, labels):
 class Boxes:
 
     def __init__(self):
-        self.max_3_q = queue.Queue()
+        self.max_3 = deque()
 
     def save_box(self, box_list):
-        self.max_3_q.put(box_list)
-        print('save box called, size now: ', self.max_3_q.qsize())
-        if self.max_3_q.qsize() > 3:
-            throw_away = self.max_3_q.get()
+        self.max_3.append(box_list)
+        print('save box called, size now: ', len(self.max_3))
+        if len(self.max_3) > 3:
+            throw_away = self.max_3.popleft()
             print('get called to remove: ', throw_away)
 
     def get_three(self):
-        return self.max_3_q
+        return self.max_3
 
 if __name__ == '__main__':
     color_space = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
@@ -324,12 +324,13 @@ if __name__ == '__main__':
     boxes.save_box('four')
     boxes.save_box('five')
     test = boxes.get_three()
-    test.qsize()
-    taken_val = test.get()
+    taken_val = test[0]
+    # taken_val = test.get()
     print('taken val is: ', taken_val)
+    boxes.save_box('six')
+
     test2 = boxes.get_three()
-    test2.qsize()
-    second_taken = test2.get()
+    second_taken = test2[0]
     print('second taken is: ', second_taken)
 
     # boxed_cars = 'output.mp4'
