@@ -88,7 +88,8 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6) 
                 window_list.append(((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)))
 
-    return draw_img, window_list
+    return window_list
+    # return draw_img, window_list
 
 '''
 Combine duplicate bounding boxes and remove false positives.
@@ -298,16 +299,16 @@ if __name__ == '__main__':
     # # plt.title('boxes')
     # # plt.show()
     def process_image(image):
-        out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         boxes.save_box(bboxes)
         arrs = boxes.get_three()
-        print('length of boxes: ', len(arrs))
+        # print('length of boxes: ', len(arrs))
         # print('datatype', arrs[0])
 
         combo_box = []
         for box_list in arrs:
             combo_box += box_list
-            print('combo box now', combo_box)
+            # print('combo box now', combo_box)
 
         zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
         # # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
@@ -315,12 +316,12 @@ if __name__ == '__main__':
         # # plt.title('empty')
         # # plt.show()
 
-        heatmap = increment_heatmap(zero_img, bboxes)
+        heatmap = increment_heatmap(zero_img, combo_box)
         # # plt.imshow(heatmap)
         # # plt.title('heatmap')
         # # plt.show()
 
-        threshed_heat = apply_thresh(heatmap, 2)
+        threshed_heat = apply_thresh(heatmap, 3)
         # # plt.imshow(threshed_heat)
         # # plt.title('threshed heatmap')
         # # plt.show()
@@ -332,8 +333,8 @@ if __name__ == '__main__':
         # plt.imshow(labeled_image)
         # plt.title('with labeled cars')
         # plt.show()
-        return out_img
-        # return labeled_image
+        # return out_img
+        return labeled_image
 
 
 
