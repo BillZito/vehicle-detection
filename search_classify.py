@@ -144,10 +144,10 @@ class Boxes:
 
     def save_box(self, box_list):
         self.max_3.append(box_list)
-        print('save box called, size now: ', len(self.max_3))
+        # print('save box called, size now: ', len(self.max_3))
         if len(self.max_3) > 3:
             throw_away = self.max_3.popleft()
-            print('get called to remove: ', throw_away)
+            # print('get called to remove: ', throw_away)
 
     def get_three(self):
         return self.max_3
@@ -281,7 +281,26 @@ if __name__ == '__main__':
     # ystop = 656
     scale = 1.5
     
+    '''
+     x1. run the find cars function
+     x2. add that value to boxes
+     x3. print out values from boxes to make sure that adding/removing corretly
+     4. sum up the 3 values to run with bbox list
+     5. optimize that bbox list
+    '''
+    boxes = Boxes()
     # out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    # boxes.save_box(bboxes)
+    # arrs = boxes.get_three()
+    # print('arrs are ', arrs)
+
+    def process_image(image):
+        out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        boxes.save_box(bboxes)
+        arrs = boxes.get_three()
+        print('length of boxes: ', len(arrs))
+        return out_img
+
     # # plt.imshow(out_img)
     # # plt.title('boxes')
     # # plt.show()
@@ -310,32 +329,12 @@ if __name__ == '__main__':
     # plt.title('with labeled cars')
     # plt.show()
 
-    '''
-    0. run video player on project video
-    1. try to run model on just one image
-    2. get class working
-    4. every couple of frames, calculate new set
-    '''
-    boxes = Boxes()
-    # print('after boxes')
-    boxes.save_box('one')
-    boxes.save_box('two')
-    boxes.save_box('three')
-    boxes.save_box('four')
-    boxes.save_box('five')
-    test = boxes.get_three()
-    taken_val = test[0]
-    # taken_val = test.get()
-    print('taken val is: ', taken_val)
-    boxes.save_box('six')
 
-    test2 = boxes.get_three()
-    second_taken = test2[0]
-    print('second taken is: ', second_taken)
 
-    # boxed_cars = 'output.mp4'
-    # clip = VideoFileClip('tet_video.mp4')
+
+    boxed_cars_vid = 'output.mp4'
+    clip = VideoFileClip('test_video.mp4')
     
 
-    # output_clip = clip.fl_image(test_func)
-    # output_clip.write_videofile(boxed_cars, audio=False)
+    output_clip = clip.fl_image(process_image)
+    output_clip.write_videofile(boxed_cars_vid, audio=False)
