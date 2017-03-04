@@ -294,40 +294,47 @@ if __name__ == '__main__':
     # arrs = boxes.get_three()
     # print('arrs are ', arrs)
 
+    # # plt.imshow(out_img)
+    # # plt.title('boxes')
+    # # plt.show()
     def process_image(image):
         out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         boxes.save_box(bboxes)
         arrs = boxes.get_three()
         print('length of boxes: ', len(arrs))
+        # print('datatype', arrs[0])
+
+        combo_box = []
+        for box_list in arrs:
+            combo_box += box_list
+            print('combo box now', combo_box)
+
+        zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
+        # # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
+        # # plt.imshow(zero_img)
+        # # plt.title('empty')
+        # # plt.show()
+
+        heatmap = increment_heatmap(zero_img, bboxes)
+        # # plt.imshow(heatmap)
+        # # plt.title('heatmap')
+        # # plt.show()
+
+        threshed_heat = apply_thresh(heatmap, 2)
+        # # plt.imshow(threshed_heat)
+        # # plt.title('threshed heatmap')
+        # # plt.show()
+
+        # # apply label() to get [heatmap_w/_labels, num_labels]
+        labels = label(threshed_heat)
+        # # print("labels", labels[1])
+        labeled_image = box_labels(image, labels)
+        # plt.imshow(labeled_image)
+        # plt.title('with labeled cars')
+        # plt.show()
         return out_img
+        # return labeled_image
 
-    # # plt.imshow(out_img)
-    # # plt.title('boxes')
-    # # plt.show()
-
-    # zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
-    # # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
-    # # plt.imshow(zero_img)
-    # # plt.title('empty')
-    # # plt.show()
-
-    # heatmap = increment_heatmap(zero_img, bboxes)
-    # # plt.imshow(heatmap)
-    # # plt.title('heatmap')
-    # # plt.show()
-
-    # threshed_heat = apply_thresh(heatmap, 2)
-    # # plt.imshow(threshed_heat)
-    # # plt.title('threshed heatmap')
-    # # plt.show()
-
-    # # apply label() to get [heatmap_w/_labels, num_labels]
-    # labels = label(threshed_heat)
-    # # print("labels", labels[1])
-    # labeled_image = box_labels(image, labels)
-    # plt.imshow(labeled_image)
-    # plt.title('with labeled cars')
-    # plt.show()
 
 
 
