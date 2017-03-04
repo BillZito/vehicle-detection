@@ -3,6 +3,7 @@ import glob
 import time
 import pickle
 import numpy as np
+from moviepy.editor import VideoFileClip
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from scipy.ndimage.measurements import label
@@ -264,31 +265,50 @@ if __name__ == '__main__':
     # ystop = 656
     scale = 1.5
     
-    out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-    plt.imshow(out_img)
-    plt.title('boxes')
-    plt.show()
+    # out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    # # plt.imshow(out_img)
+    # # plt.title('boxes')
+    # # plt.show()
 
-    zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
-    # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
-    # plt.imshow(zero_img)
-    # plt.title('empty')
+    # zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
+    # # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
+    # # plt.imshow(zero_img)
+    # # plt.title('empty')
+    # # plt.show()
+
+    # heatmap = increment_heatmap(zero_img, bboxes)
+    # # plt.imshow(heatmap)
+    # # plt.title('heatmap')
+    # # plt.show()
+
+    # threshed_heat = apply_thresh(heatmap, 2)
+    # # plt.imshow(threshed_heat)
+    # # plt.title('threshed heatmap')
+    # # plt.show()
+
+    # # apply label() to get [heatmap_w/_labels, num_labels]
+    # labels = label(threshed_heat)
+    # # print("labels", labels[1])
+    # labeled_image = box_labels(image, labels)
+    # plt.imshow(labeled_image)
+    # plt.title('with labeled cars')
     # plt.show()
 
-    heatmap = increment_heatmap(zero_img, bboxes)
-    # plt.imshow(heatmap)
-    # plt.title('heatmap')
-    # plt.show()
+    '''
+    0. run video player on project video
+    1. try to run model on just one image
+    2. get class working
+    4. every couple of frames, calculate new set
+    '''
+    boxed_cars = 'output.mp4'
+    clip = VideoFileClip('project_video.mp4')
+    
 
-    threshed_heat = apply_thresh(heatmap, 2)
-    # plt.imshow(threshed_heat)
-    # plt.title('threshed heatmap')
-    # plt.show()
+    def test_func(img):
+        print('inside test')
+        # plt.imshow(img)
+        # plt.show()
+        return img
 
-    # apply label() to get [heatmap_w/_labels, num_labels]
-    labels = label(threshed_heat)
-    # print("labels", labels[1])
-    labeled_image = box_labels(image, labels)
-    plt.imshow(labeled_image)
-    plt.title('with labeled cars')
-    plt.show()
+    output_clip = clip.fl_image(test_func)
+    output_clip.write_videofile(boxed_cars, audio=False)
