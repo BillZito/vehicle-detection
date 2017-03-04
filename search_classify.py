@@ -1,6 +1,7 @@
 import cv2
 import glob
 import time
+import queue
 import pickle
 import numpy as np
 from moviepy.editor import VideoFileClip
@@ -135,6 +136,21 @@ def box_labels(img, labels):
         cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
 
     return img
+
+class Boxes:
+
+    def __init__(self):
+        self.max_3_q = queue.Queue()
+
+    def save_box(self, box_list):
+        self.max_3_q.put(box_list)
+        print('save box called, size now: ', self.max_3_q.qsize())
+        if self.max_3_q.qsize() > 3:
+            throw_away = self.max_3_q.get()
+            print('get called to remove: ', throw_away)
+
+    def get_three(self):
+        return self.max_3_q
 
 if __name__ == '__main__':
     color_space = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
@@ -300,15 +316,25 @@ if __name__ == '__main__':
     2. get class working
     4. every couple of frames, calculate new set
     '''
-    boxed_cars = 'output.mp4'
-    clip = VideoFileClip('project_video.mp4')
+    boxes = Boxes()
+    # print('after boxes')
+    boxes.save_box('one')
+    boxes.save_box('two')
+    boxes.save_box('three')
+    boxes.save_box('four')
+    boxes.save_box('five')
+    test = boxes.get_three()
+    test.qsize()
+    taken_val = test.get()
+    print('taken val is: ', taken_val)
+    test2 = boxes.get_three()
+    test2.qsize()
+    second_taken = test2.get()
+    print('second taken is: ', second_taken)
+
+    # boxed_cars = 'output.mp4'
+    # clip = VideoFileClip('tet_video.mp4')
     
 
-    def test_func(img):
-        print('inside test')
-        # plt.imshow(img)
-        # plt.show()
-        return img
-
-    output_clip = clip.fl_image(test_func)
-    output_clip.write_videofile(boxed_cars, audio=False)
+    # output_clip = clip.fl_image(test_func)
+    # output_clip.write_videofile(boxed_cars, audio=False)
