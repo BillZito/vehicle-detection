@@ -10,8 +10,7 @@ In a video, finds the cars and tracks their movement. Input is project_video, ou
 Steps: 
 
 1. Perform HOG feature extraction on car & non-car images 
-1. Normalize features and randomize
-1. Train a Linear SVM classifier 
+1. Normalize features, randomize, and train a Linear SVM classifier 
 1. Search for vehicles in images using sliding windows
 1. Use time-series heat map to reject outliers and follow detected vehicles
 1. Run pipeline on a video stream
@@ -19,112 +18,90 @@ Steps:
 ---
 ## Methodology ##
 
-###1. Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
-(6hrs)
+
+###1. Perform HOG feature extraction on car & non-car images 
+
+**helpers.py:** 
+
+get_hog_features(): Given the inputed number of orientations, number of pixels per cell, and numbers of cells per block (for block normalization), the hog features are taken and returned. Optionally, visualization is returned for visual testing. 
+
+Number of orientations, pixels per cell, and numbers of cells per block were all experimented with. Training accuracy was not significantly affected from changes, so the values were left at their defaults. 
+
+Optionally, use a histogram of colors with color_hist() and a feature vector of the colors themselves with bin_spatial() for training the SVC. Given that these add time to model training and did not significantly affect training scores, they are not used in the final product.
+
+extract_features(): Converts to the desired color spectrum and puts the hog_features and any other feature vectors together (no other feature vectors used in final product). 
+
+Through experimentation with YCrCb, YUV, HLS, HSV, and RGB color spectrums, the YCrCb was found to be optimal for training the SVC (all three color channels). This is interesting since the Y channel appears to have significant differences between cars and non-cars, whereas the Cr and Cb seem to carry little value, but using their channels does improve training accuracy.
 
 
-1. Calibrate the camera
-
-c**alibrate.py:** the camera is calibrated using opencv functions with 20 chessboard images from different angles and distances. calibrate_cam() looks for the 9x6 inner corners in each image and stores them in an array. An example chessboard image:
-
-![alt tag](./camera_cal/calibration11.jpg)
+###2. Normalize features, randomize, and train a Linear SVM classifier 
 
 
-###2. Undistort images
+**search_classify.py:**
 
-Given these corners, the distortion matrix and distances are calculated using opencv and used to undistort images taken from this camera. undist() applies the undistortion.
+In the main body of the python file, the model is trained if it hasn't been trained before. Roughly 9k 64x64 labeled images of cars and 9k 64x64 images of noncars were extracted. The features for all the car images and not-car images were taken and v-stacked together. 
 
-An example image before undistortion: 
-![alt tag](./test_images/test2.jpg)
+Then, the features are standardized using an X scaler to be of 0 mean and equal variance. This ensures that some feature's scores do not have an outsize impact on the results of the model training.
 
+The labels for these images were h-stacked. The data is shuffled and split into a training (80%) and testing (20%) data set. 
 
-And after undistortion (notice how the edge of the top right bush changed):
-![alt tag](./output_images/test2_undistorted.jpg)
-
+A linear SVM classifier is fit to the data, and a prediction is output. The final model reached a 99% accuracy in determining cars from non-cars. 
 
 
-###3. Apply binary thresholds to identify lane lines
+###3. Search for vehicles in images using sliding windows
 
-**threshold_helpers.py** contains the fucntions for applying binary thresholds detect the lane lines.
+**search_classify.py:**
 
-1. abs_sobel_thresh(): calculates the threshold along either x (mostly vertical) or y (mostly horizontal) orients, given passed in thersholds (upper and lower bounds) and kernel values (which determines smoothness). The red color spectrum was found to give the best thresholds via guess and test.
-1. hls_thresh(): uses the saturation channel of the hls color spectrum as a binary threshold.
-1. hsv_thresh(): uses the v channel of the hsv color sepecturm for binary thresholding.
-1. mag_thresh(): creates a magnitude threshold based on the combined values of the sobel in x and y directions. (not used)
-1. dir_thresh(): sets a directional threshold for given bounds between 0 (horizontal) and pi/2 (vertical). (not used)
-1. combo_thresh(): sets a pixel to 1 if it is found in either the x and y thresholds or if it is found in the magnitude, direction, and hls thresholds. 
+find_cars(): Given an image and the parameters mentioned above that were used to train the model, the hog features (and optionally other features) are calculated for the 3 color channels (Y, Cr, Cb). 
 
-The parameters were tuned by viewing each of the 6 thresholds independently and combined and looking for which combinations maximized lane pixels while also minimizing noise. Ultimately, a combination of (hls and hsv) or (x and y) provided the best results. I've visualized the image below.
+Then, a sliding window is run across the bottom half of the image (to avoid false positives in the sky). For that given sliding window, the hog features for that part are taken out, and any cars that are found are bound with a box. This box can optionally be drawn onto the image for visual testing, but in the final implementation is added to the list of all bounding boxes and returned.
 
-After all thresholds are applied:
-![alt tag](./output_images/combo_thresh_2_final.jpg)
+###4. Use time-series heat map to reject outliers and follow detected vehicles
+
+**search_classify.py:**
+
+class Boxes() defines a class for keeping track of the last three sets of bounding boxes. It uses a deque for efficient push/ pop in keeping track of the time series data. The three most recent bounding boxes are combined, and used to create the heatmap.
+
+zero_img is a blank image for creating a heatmap. 
+
+increment_heatmap(): takes in the blank image and the list of bounding boxes, and increments the pixel value of each location in each bounding box by 1. Now, we have the frequency of how often each pixel appeared in a bounding box. 
+
+apply_thresh(): applies a threshold of this frequency to prevent false-positives from occuring. Guess and test was used to find that 7 worked well to prevent incorrect classifications from appearing to the car as other vehicles. 
+
+label() is imported and used to separate the different heatmaps from each other (as they pertain to different vehicles)
+
+box_labels takes these separate labels, and applies a single bounding box to each one by finding the min and max x and y points for each. This combines duplicate bounding boxes, and returns images with a single bounding box for each car. 
 
 
+###6. Run pipeline on a video stream
 
-###4. Transform perspective to birds-eye-view
+**search_classify.py**
 
-**draw_lane.py** contains the code for transforming perspective. 
+process_image() is performed on each image in the video. It combines the steps laid out previously, calculating the bounding boxes based on sliding windows and hog features, and then using heatmaps to remove false positives and combine duplicates. 
 
-**change_perspective():** takes a road image and maps it to the birds eye view. A transformation matrix, M, is calculated between the src points (4 corners of a straight lane) and the destination points (a rectangle/birds eye view of the lane). cv2.warpPerspective then maps the previous image to the birds eye view.
-
-The src points are based proportionally on the size of the image, and were determined by picking 4 points on an image of the straight lane. 
-
-After changing perspective, the left and right lines should appear parallel since they should curve the same amount at any point in the lane.
-
-Credit to the Udacity lecture on programmatically finding good points for the warp.
-
-![alt tag](./output_images/warped_5_final.jpg)
+the final result is output as project_output.mp4
 
 
 
-###5. Detect left/right lane pixels and determine curvature
-
-**draw_lane.py** contains the code for deteching l/r lane pixels.
-
-**lr_curvature():** takes the warped and thresholded image and extracts the locations of the pixels in it. Using sliding windows, the lane-related pixels are extracted and a second order polynomial fit to the left and right lanes. 
-
-Finally, it converts from pixel space to meter space and calculates the left and right curve radius.
-  
-**class Lane():** keeps track of the left and right values, curvatures, and text for the image. Several checks are applied on the data before accepting it is a new lane: the curves most be similar in magnitude, and the right lane must have enough pixels in the right region of the screen. Otherwise, the previous lane values are used. 
-
-Example sliding windows, corresponding left(red) and right(blue) pixels, and best fit lines(yellow):
 
 ![alt tag](./output_images/bestfit_5_final.jpg)
-
-
-###6. Warp detected lane back onto the original image
-
-**draw_lane.py** also puts all the pieces together. 
-
-**draw_on_road():** Given the calculated lines of best fit, the x and y values are converted to points and filled in green. 
-
-The inverse perspective transform of the original birds eye transform is used to warp the images back to the original image. 
-
-**process_image():** Puts all the steps above together. 
-
-An example end-product: 
-
-![alt tag](./output_images/5_final.jpg)
 
 ---
 
 ## Discussion
 
-1. To determine the right thresholding, I experimented with gray color images and the red color channel since it can recognize both white and yellow lines. Messing with the parameters, I determined that the red color channel worked best, and that combing the hls_threshold with the dir and mag took out the shadow noise in the hls_threshold function.
+1. Calculating hog features is an expensive operation as the gradients of every pixel must be calculated. However, by calculating hog features once for the entire image and then subsampling that with our sliding windows, we prevent any duplicated work. 
 
+1. Pixel values are noramlized based on the cv2 and mpimg standards. cv2 reads in images with pixel values 0 < val < 255, whereas mpimg reads in png at 0 < val < 1 and jpg at 0 < val < 255. Furthermore, cv2 reads in colors as BGR, whereas mpimg reads them in as RGB. To simplify my code, I used cv2 for png and changed the color conversions to go from the BGR space, which allowed me to not have to normalize between different ranges of pixel values. This was hard to debug at first as it made a well-trained classifier perform poorly.
 
-1. To determine the best spots for the conversion from image space to pixel space, I first played around with different hard-coded corners for the lanes. Eventually, I used proportional locations in the image because they returned more parallel lines.
+1. Some intuition was developed for the color spectrums by visualizing them and reading up about their use cases. However, further visualization functions and a deeper dive into the literature would be useful to understand potential use cases for different color spectrums (in the context of classifiers in particular).
 
+1. The SCV was chosen for its balance between training speed and prediction accuracy. It reached 99% accuracy, which was matched by its ability on the actual videos. 
 
-1. After developing my convolutional neural network for maintaining lanes, I knew to visualize my images at each step of the process to avoid stupid mistakes. Given the large number of helper methods for this problem, I also had to make decisions about how to best modularize the code. I decided that the camera calibration functions could stand on their own, as could all of the thresholding functions, allowing the main draw_lane.py to call the necessary helpers in process_image.
+1. The code effectively identifies and tracks vehicles, but future improvements might include creating a better bounding box for each car, and increasing the threshold to remove any false positives. Furthermore, the split between training and testing data could be improved as time-series data was randomly split. This resulted in almost identical images being used for both training and testing, allowing for overfitting based on arbitrary characteristics of the images. 
 
-1. This model shows a few hiccups with shadows and line markings. I could improve it by averaging several past lane curvatures. Additionally, instead of sliding windows I could use convolutions to determine which pixels are part of the left and right lanes. Finally, this has not been tested with night-time or rainy condition videos, and those may blur the lines to the point where the current model would not work well.
+1. Additionally, further research should be performed on more modern techniques for finding vehicles in images, including YOLO. 
 
-1. Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
-1. Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
-1. Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
-1. Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
-1. Estimate a bounding box for vehicles detected.
 ---
 
 ## Acknowledgements 

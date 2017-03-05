@@ -88,8 +88,8 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6) 
                 window_list.append(((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)))
 
-    return window_list
-    # return draw_img, window_list
+    # return window_list
+    return draw_img, window_list
 
 '''
 Combine duplicate bounding boxes and remove false positives.
@@ -329,7 +329,13 @@ if __name__ == '__main__':
     # # plt.title('boxes')
     # # plt.show()
     def process_image(image):
-        bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+
+        image, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        plt.imshow(image)
+        plt.title('boxes')
+        plt.show()
+
+
         boxes.save_box(bboxes)
         arrs = boxes.get_three()
         # print('length of boxes: ', len(arrs))
@@ -342,19 +348,22 @@ if __name__ == '__main__':
 
         zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
         # # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
-        # # plt.imshow(zero_img)
-        # # plt.title('empty')
-        # # plt.show()
+        plt.imshow(zero_img)
+        plt.title('empty')
+        plt.show()
 
         heatmap = increment_heatmap(zero_img, combo_box)
-        # # plt.imshow(heatmap)
-        # # plt.title('heatmap')
-        # # plt.show()
+        plt.imshow(heatmap)
+        plt.title('heatmap')
+        plt.show()
 
-        threshed_heat = apply_thresh(heatmap, 4)
-        # # plt.imshow(threshed_heat)
-        # # plt.title('threshed heatmap')
-        # # plt.show()
+        if len(arrs) == 1:
+            threshed_heat = apply_thresh(heatmap, 2)
+        else:
+            threshed_heat = apply_thresh(heatmap, 7)
+        plt.imshow(threshed_heat)
+        plt.title('threshed heatmap')
+        plt.show()
 
         # # apply label() to get [heatmap_w/_labels, num_labels]
         labels = label(threshed_heat)
