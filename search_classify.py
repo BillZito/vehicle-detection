@@ -132,6 +132,36 @@ def box_labels(img, labels):
         # draw a box on the orig image with min and max vals
         # of form: x1, y1, x2, y2
         # if (nonzero_x.shape[0] > 0):
+        # avg_x = np.sum(nonzero_x) / nonzero_x.shape[0]
+        # avg_y = np.sum(nonzero_y) / nonzero_y.shape[0]
+        # print('avg x', avg_x, 'avg y', avg_y)
+        # print('len x', nonzero_x.shape[0], 'leny', nonzero_y.shape[0])
+
+        # left_points = []
+        # right_points = []
+        
+        # for x_point in curr_points[1]:
+        #     if x_point < avg_x:
+        #         left_points.append(x_point)
+        #     else: 
+        #         right_points.append(x_point)
+
+        # top_points = []
+        # bottom_points = []
+        # for y_point in curr_points[0]:
+        #     if y_point < avg_y:
+        #         bottom_points.append(y_point)
+        #     else:
+        #         top_points.append(y_point)
+
+        # left_avg = np.sum(np.array(left_points)) // len(left_points)
+        # right_avg = np.sum(np.array(right_points)) // len(right_points)
+        # top_avg = np.sum(np.array(top_points)) // len(top_points)
+        # bottom_avg = np.sum(np.array(bottom_points)) // len(bottom_points)
+        # print('left', left_avg, 'bottom', bottom_avg, 'right', right_avg, 'top', top_avg, )
+        # print('sum', np.sum(nonzero_x)/nonzero_x.shape[0])
+        # try reversing top and bottom if doesnt work
+        # bbox = ((left_avg, bottom_avg), (right_avg, top_avg))
         bbox = ((np.min(nonzero_x), np.min(nonzero_y)), (np.max(nonzero_x), np.max(nonzero_y)))
         # print('bbox', bbox[0], bbox[1])
         cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
@@ -290,7 +320,7 @@ if __name__ == '__main__':
      5. optimize that bbox list
     '''
     boxes = Boxes()
-    # out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+    # bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
     # boxes.save_box(bboxes)
     # arrs = boxes.get_three()
     # print('arrs are ', arrs)
@@ -321,7 +351,7 @@ if __name__ == '__main__':
         # # plt.title('heatmap')
         # # plt.show()
 
-        threshed_heat = apply_thresh(heatmap, 3)
+        threshed_heat = apply_thresh(heatmap, 4)
         # # plt.imshow(threshed_heat)
         # # plt.title('threshed heatmap')
         # # plt.show()
@@ -330,19 +360,22 @@ if __name__ == '__main__':
         labels = label(threshed_heat)
         # # print("labels", labels[1])
         labeled_image = box_labels(image, labels)
-        # plt.imshow(labeled_image)
-        # plt.title('with labeled cars')
-        # plt.show()
+        plt.imshow(labeled_image)
+        plt.title('with labeled cars')
+        plt.show()
         # return out_img
         return labeled_image
 
 
+    # process_image(image)
 
 
-
-    boxed_cars_vid = 'output.mp4'
-    clip = VideoFileClip('test_video.mp4')
+    # boxed_cars_vid = 'project_output.mp4'
+    # clip = VideoFileClip('project_video.mp4')
     
+    boxed_cars_vid = 'test_output.mp4'
+    clip = VideoFileClip('test_video.mp4')
+
 
     output_clip = clip.fl_image(process_image)
     output_clip.write_videofile(boxed_cars_vid, audio=False)
