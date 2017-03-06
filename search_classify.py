@@ -175,6 +175,7 @@ class Boxes:
     def __init__(self):
         self.max_3 = deque()
         self.found_5 = deque()
+        self.labels = 0
 
     def save_box(self, box_list):
         self.max_3.append(box_list)
@@ -187,8 +188,14 @@ class Boxes:
         self.found_5.append(box_list)
         # print('save final called, size now', len(self.found_5))
 
-        if len(self.found_5) > 5:
+        if len(self.found_5) > 8:
             throw_away = self.found_5.popleft()
+
+    def set_labels(self, num):
+        self.labels = num
+
+    def get_labels(self):
+        return self.labels
 
     def get_orig(self):
         return self.max_3
@@ -389,30 +396,46 @@ if __name__ == '__main__':
             all_finals += box_list
 
         final_zero_img = np.zeros_like(img_copy[:, :, 0].astype(np.float))
-        plt.imshow(final_zero_img)
-        plt.title('empty')
-        plt.show()
+        # plt.imshow(final_zero_img)
+        # plt.title('empty')
+        # plt.show()
 
         final_heatmap = increment_heatmap(final_zero_img, all_finals)
-        plt.imshow(final_heatmap)
-        plt.title('final_heatmap')
-        plt.show()
+        # plt.imshow(final_heatmap)
+        # plt.title('final_heatmap')
+        # plt.show()
 
-        if len(final_arrs) < 3:
+        if len(final_arrs) < 5:
             final_threshed_heat = apply_thresh(final_heatmap, 0)
         else: 
-            final_threshed_heat = apply_thresh(final_heatmap, 2)
-        plt.imshow(final_threshed_heat)
-        plt.title('threshed heatmap')
-        plt.show()
+            final_threshed_heat = apply_thresh(final_heatmap, 3)
+        # plt.imshow(final_threshed_heat)
+        # plt.title('final threshed heatmap')
+        # plt.show()
 
         # # apply label() to get [heatmap_w/_labels, num_labels]
         final_labels = label(final_threshed_heat)
+
+        # if less labels, make sure aren't filtering too much
+        # print('final labels', final_labels[1], 'prev labels', boxes.get_labels())
+        # if final_labels[1] < boxes.get_labels():
+        #     # plt.imshow(final_heatmap)
+        #     # plt.title('final_heatmap')
+        #     # plt.show()
+
+        #     final_threshed_heat = apply_thresh(final_heatmap, 0)
+        #     final_labels = label(final_threshed_heat)
+        #     print('after redo', final_labels[1])
+        #     plt.imshow(final_threshed_heat)
+        #     plt.title('after redo')
+        #     plt.show()
+
+        boxes.set_labels(final_labels[1])
         # # print("final_labels", final_labels[1])
         final_labeled_image, last_boxes = box_labels(img_copy, final_labels)
-        plt.imshow(final_labeled_image)
-        plt.title('with final perform')
-        plt.show()
+        # plt.imshow(final_labeled_image)
+        # plt.title('with final perform')
+        # plt.show()
 
         return final_labeled_image
         # return hog_labeled_image
