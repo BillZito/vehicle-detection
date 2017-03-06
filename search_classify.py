@@ -185,6 +185,7 @@ class Boxes:
 
     def save_final(self, box_list):
         self.found_5.append(box_list)
+        # print('save final called, size now', len(self.found_5))
 
         if len(self.found_5) > 5:
             throw_away = self.found_5.popleft()
@@ -325,10 +326,7 @@ if __name__ == '__main__':
     scale = 1.5
     
     '''
-    1) save values to class
-
     2) determine which values correspond to the same car-- do another heatmap? 
-      a. already averaging all across three frames... 
     3) average/ extrapolate after 3-5 frames
 
 
@@ -355,54 +353,76 @@ if __name__ == '__main__':
             combo_box += box_list
             # print('combo box now', combo_box)
 
-        zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
+        hog_zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
         # # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
-        # # plt.imshow(zero_img)
+        # # plt.imshow(hog_zero_img)
         # # plt.title('empty')
         # # plt.show()
 
-        heatmap = increment_heatmap(zero_img, combo_box)
-        # plt.imshow(heatmap)
-        # plt.title('heatmap')
+        hog_heatmap = increment_heatmap(hog_zero_img, combo_box)
+        # plt.imshow(hog_heatmap)
+        # plt.title('hog_heatmap')
         # plt.show()
 
         # print('length of arr', len(arrs))
         if len(arrs) < 3:
-            threshed_heat = apply_thresh(heatmap, 2)
+            hog_threshed_heat = apply_thresh(hog_heatmap, 2)
         else: 
-            threshed_heat = apply_thresh(heatmap, 5)
-        # plt.imshow(threshed_heat)
+            hog_threshed_heat = apply_thresh(hog_heatmap, 5)
+        # plt.imshow(hog_threshed_heat)
         # plt.title('threshed heatmap')
         # plt.show()
 
         # # apply label() to get [heatmap_w/_labels, num_labels]
-        labels = label(threshed_heat)
-        # # print("labels", labels[1])
-        labeled_image, final_boxes = box_labels(image, labels)
-        plt.imshow(labeled_image)
-        plt.title('with labeled cars')
+        hog_labels = label(hog_threshed_heat)
+        # # print("hog_labels", hog_labels[1])
+        hog_labeled_image, final_boxes = box_labels(image, hog_labels)
+        # plt.imshow(hog_labeled_image)
+        # plt.title('with labeled cars')
+        # plt.show()
+        boxes.save_final(final_boxes)
+
+        final_arrs = boxes.get_finals()
+
+        all_finals = []
+        for box_list in final_arrs:
+            all_finals += box_list
+
+        final_zero_img = np.zeros_like(img_copy[:, :, 0].astype(np.float))
+        plt.imshow(final_zero_img)
+        plt.title('empty')
         plt.show()
 
-        plt.imshow(img_copy)
-        plt.title('before draw')
-        plt.show()
-        for bbox in final_boxes:
-            cv2.rectangle(img_copy, bbox[0], bbox[1], (0, 0, 255), 6)
-        plt.imshow(img_copy)
-        plt.title('after draw')
+        final_heatmap = increment_heatmap(final_zero_img, all_finals)
+        plt.imshow(final_heatmap)
+        plt.title('final_heatmap')
         plt.show()
 
-        # return out_img
-        return labeled_image
+        if len(final_arrs) < 3:
+            final_threshed_heat = apply_thresh(final_heatmap, 0)
+        else: 
+            final_threshed_heat = apply_thresh(final_heatmap, 2)
+        plt.imshow(final_threshed_heat)
+        plt.title('threshed heatmap')
+        plt.show()
 
+        # # apply label() to get [heatmap_w/_labels, num_labels]
+        final_labels = label(final_threshed_heat)
+        # # print("final_labels", final_labels[1])
+        final_labeled_image, last_boxes = box_labels(img_copy, final_labels)
+        plt.imshow(final_labeled_image)
+        plt.title('with final perform')
+        plt.show()
 
+        return final_labeled_image
+        # return hog_labeled_image
     # process_image(image)
 
 
     # boxed_cars_vid = 'project_output.mp4'
     # clip = VideoFileClip('project_video.mp4')
     
-    boxed_cars_vid = 'test_output.mp4'
+    boxed_cars_vid = 'test_output2.mp4'
     clip = VideoFileClip('test_video.mp4')
 
 
