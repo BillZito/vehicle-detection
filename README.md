@@ -1,6 +1,6 @@
 # Vehicle detection and tracking
 
-![alt tag](./output_images/5_final.jpg)
+![alt tag](./output_images/final_box.png)
 
 ---
 
@@ -33,7 +33,6 @@ extract_features(): Converts to the desired color spectrum and puts the hog_feat
 
 Through experimentation with YCrCb, YUV, HLS, HSV, and RGB color spectrums, the YCrCb was found to be optimal for training the SVC (all three color channels). This is interesting since the Y channel appears to have significant differences between cars and non-cars, whereas the Cr and Cb seem to carry little value, but using their channels does improve training accuracy.
 
-
 ###2. Normalize features, randomize, and train a Linear SVM classifier 
 
 
@@ -56,6 +55,9 @@ find_cars(): Given an image and the parameters mentioned above that were used to
 
 Then, a sliding window is run across the bottom half of the image (to avoid false positives in the sky). For that given sliding window, the hog features for that part are taken out, and any cars that are found are bound with a box. This box can optionally be drawn onto the image for visual testing, but in the final implementation is added to the list of all bounding boxes and returned.
 
+An example image with all of the hog bounding boxes drawn on it:
+![alt tag](./output_images/hog.png)
+
 ###4. Use time-series heat map to reject outliers and follow detected vehicles
 
 **search_classify.py:**
@@ -66,12 +68,20 @@ zero_img is a blank image for creating a heatmap.
 
 increment_heatmap(): takes in the blank image and the list of bounding boxes, and increments the pixel value of each location in each bounding box by 1. Now, we have the frequency of how often each pixel appeared in a bounding box. 
 
+An example image's heatmap:
+![alt tag](./output_images/heatmap.png)
+
 apply_thresh(): applies a threshold of this frequency to prevent false-positives from occuring. Guess and test was used to find that 7 worked well to prevent incorrect classifications from appearing to the car as other vehicles. 
+
+An example image after the thresholding:
+![alt tag](./output_images/thresholded_heatmap.png)
 
 label() is imported and used to separate the different heatmaps from each other (as they pertain to different vehicles)
 
 box_labels takes these separate labels, and applies a single bounding box to each one by finding the min and max x and y points for each. This combines duplicate bounding boxes, and returns images with a single bounding box for each car. 
 
+Giving us a final image with nice bounding boxes:
+![alt tag](./output_images/final_box.png)
 
 ###6. Run pipeline on a video stream
 
@@ -81,10 +91,6 @@ process_image() is performed on each image in the video. It combines the steps l
 
 the final result is output as project_output.mp4
 
-
-
-
-![alt tag](./output_images/bestfit_5_final.jpg)
 
 ---
 
