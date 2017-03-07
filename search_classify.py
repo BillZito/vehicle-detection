@@ -88,8 +88,8 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6) 
                 window_list.append(((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)))
 
-    return window_list
-    # return draw_img, window_list
+    # return window_list
+    return draw_img, window_list
 
 '''
 Combine duplicate bounding boxes and remove false positives.
@@ -125,53 +125,17 @@ def box_labels(img, labels):
     for label in range(1, labels[1] + 1):
         # get the vals that apply just to that label
         curr_points = (labels[0] == label).nonzero()
-        # print('length', len(curr_points))
         nonzero_y = np.array(curr_points[0])
-        # print('x', nonzero_x.shape)
         nonzero_x = np.array(curr_points[1])
-        # print('y', nonzero_y.shape)
-        # draw a box on the orig image with min and max vals
-        # of form: x1, y1, x2, y2
-        # if (nonzero_x.shape[0] > 0):
-        # avg_x = np.sum(nonzero_x) / nonzero_x.shape[0]
-        # avg_y = np.sum(nonzero_y) / nonzero_y.shape[0]
-        # print('avg x', avg_x, 'avg y', avg_y)
-        # print('len x', nonzero_x.shape[0], 'leny', nonzero_y.shape[0])
 
-        # left_points = []
-        # right_points = []
-        
-        # for x_point in curr_points[1]:
-        #     if x_point < avg_x:
-        #         left_points.append(x_point)
-        #     else: 
-        #         right_points.append(x_point)
 
-        # top_points = []
-        # bottom_points = []
-        # for y_point in curr_points[0]:
-        #     if y_point < avg_y:
-        #         bottom_points.append(y_point)
-        #     else:
-        #         top_points.append(y_point)
-
-        # left_avg = np.sum(np.array(left_points)) // len(left_points)
-        # right_avg = np.sum(np.array(right_points)) // len(right_points)
-        # top_avg = np.sum(np.array(top_points)) // len(top_points)
-        # bottom_avg = np.sum(np.array(bottom_points)) // len(bottom_points)
-        # print('left', left_avg, 'bottom', bottom_avg, 'right', right_avg, 'top', top_avg, )
-        # print('sum', np.sum(nonzero_x)/nonzero_x.shape[0])
-        # try reversing top and bottom if doesnt work
-        # bbox = ((left_avg, bottom_avg), (right_avg, top_avg))
         bbox = ((np.min(nonzero_x), np.min(nonzero_y)), (np.max(nonzero_x), np.max(nonzero_y)))
         final_boxes.append(bbox)
-        # print('bbox', bbox[0], bbox[1])
         cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
 
     return img, final_boxes
 
 class Boxes:
-
     def __init__(self):
         self.max_3 = deque()
         self.found_5 = deque()
@@ -194,14 +158,28 @@ class Boxes:
     def set_labels(self, num):
         self.labels = num
 
-    def get_labels(self):
-        return self.labels
-
     def get_orig(self):
         return self.max_3
 
     def get_finals(self):
         return self.found_5
+
+    def get_labels(self):
+        return self.labels
+
+'''
+for each image in array, print
+'''
+def show_images(images):
+  fig = plt.figure()
+  for num in range(1, len(images)):
+    image = images[num]
+    fig.add_subplot(3, 3, num)
+    plt.title(num)
+    plt.imshow(image, cmap='gray')
+
+  plt.show()
+
 
 if __name__ == '__main__':
     color_space = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
@@ -330,7 +308,7 @@ if __name__ == '__main__':
 
     # ystart = 400
     # ystop = 656
-    scale = 1
+    scale = 1.5
     
     '''
     2) determine which values correspond to the same car-- do another heatmap? 
@@ -347,19 +325,28 @@ if __name__ == '__main__':
     # # plt.imshow(out_img)
     # # plt.title('boxes')
     # # plt.show()
+
+    '''
+    process image:
+    1) calculates hog features
+    2) combines all hog boxes and then creates heatmap
+    3) labels the images to separate them
+    4) draws ideal boxes around each of those sets
+    '''
     def process_image(image):
         img_copy = np.copy(image)
-        bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-        # print('hog found', len(bboxes))
+        out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        print('hog found', len(bboxes))
+        plt.imshow(out_img)
+        plt.title('hog output')
+        plt.show()
+
         boxes.save_box(bboxes)
         arrs = boxes.get_orig()
-        # print('length of boxes: ', len(arrs))
-        # print('datatype', arrs[0])
 
         combo_box = []
         for box_list in arrs:
             combo_box += box_list
-            # print('combo box now', combo_box)
 
         hog_zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
         # # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
@@ -368,47 +355,54 @@ if __name__ == '__main__':
         # # plt.show()
 
         hog_heatmap = increment_heatmap(hog_zero_img, combo_box)
-        # plt.imshow(hog_heatmap)
-        # plt.title('hog_heatmap')
-        # plt.show()
+        plt.imshow(hog_heatmap)
+        plt.title('hog_heatmap')
+        plt.show()
 
         # print('length of arr', len(arrs))
-        if len(bboxes) < 1 or len(arrs) < 2:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 0)
-        elif len(arrs) < 3:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 1)
-        else:  
-            hog_threshed_heat = apply_thresh(hog_heatmap, 3)
-        # plt.imshow(hog_threshed_heat)
-        # plt.title('threshed heatmap')
-        # plt.show()
+        # if len(bboxes) < 1 or len(arrs) < 2:
+        #     hog_threshed_heat = apply_thresh(hog_heatmap, 0)
+        # elif len(arrs) < 3:
+        #     hog_threshed_heat = apply_thresh(hog_heatmap, 1)
+        # else:  
+        #     hog_threshed_heat = apply_thresh(hog_heatmap, 3)
+        hog_threshed_heat = apply_thresh(hog_heatmap, 1)
+        plt.imshow(hog_threshed_heat)
+        plt.title('threshed heatmap')
+        plt.show()
 
         # # apply label() to get [heatmap_w/_labels, num_labels]
         hog_labels = label(hog_threshed_heat)
         # # print("hog_labels", hog_labels[1])
         hog_labeled_image, final_boxes = box_labels(image, hog_labels)
-        # plt.imshow(hog_labeled_image)
-        # plt.title('with labeled cars')
-        # plt.show()
-        boxes.save_final(final_boxes)
+        plt.imshow(hog_labeled_image)
+        plt.title('with labeled cars')
+        plt.show()
 
-        final_arrs = boxes.get_finals()
 
-        all_finals = []
-        for box_list in final_arrs:
-            all_finals += box_list
 
-        final_zero_img = np.zeros_like(img_copy[:, :, 0].astype(np.float))
-        # plt.imshow(final_zero_img)
-        # plt.title('empty')
-        # plt.show()
+        '''
+        attempted averaging of best box
+        '''
+        # boxes.save_final(final_boxes)
 
-        final_heatmap = increment_heatmap(final_zero_img, all_finals)
-        # plt.imshow(final_heatmap)
-        # plt.title('final_heatmap')
-        # plt.show()
+        # final_arrs = boxes.get_finals()
 
-        final_threshed_heat = apply_thresh(final_heatmap, 0)
+        # all_finals = []
+        # for box_list in final_arrs:
+        #     all_finals += box_list
+
+        # final_zero_img = np.zeros_like(img_copy[:, :, 0].astype(np.float))
+        # # plt.imshow(final_zero_img)
+        # # plt.title('empty')
+        # # plt.show()
+
+        # final_heatmap = increment_heatmap(final_zero_img, all_finals)
+        # # plt.imshow(final_heatmap)
+        # # plt.title('final_heatmap')
+        # # plt.show()
+
+        # final_threshed_heat = apply_thresh(final_heatmap, 0)
 
         # print('len final arrs', len(final_arrs))
         # if len(bboxes) < 1 or len(final_arrs) < 5:
@@ -420,32 +414,33 @@ if __name__ == '__main__':
         # plt.show()
 
         # # apply label() to get [heatmap_w/_labels, num_labels]
-        final_labels = label(final_threshed_heat)
+        # final_labels = label(final_threshed_heat)
 
-        # if less labels, make sure aren't filtering too much
-        # print('final labels', final_labels[1], 'prev labels', boxes.get_labels())
-        # if final_labels[1] < boxes.get_labels():
-        #     # plt.imshow(final_heatmap)
-        #     # plt.title('final_heatmap')
-        #     # plt.show()
+        # # if less labels, make sure aren't filtering too much
+        # # print('final labels', final_labels[1], 'prev labels', boxes.get_labels())
+        # # if final_labels[1] < boxes.get_labels():
+        # #     # plt.imshow(final_heatmap)
+        # #     # plt.title('final_heatmap')
+        # #     # plt.show()
 
-        #     final_threshed_heat = apply_thresh(final_heatmap, 0)
-        #     final_labels = label(final_threshed_heat)
-        #     print('after redo', final_labels[1])
-        #     plt.imshow(final_threshed_heat)
-        #     plt.title('after redo')
-        #     plt.show()
+        # #     final_threshed_heat = apply_thresh(final_heatmap, 0)
+        # #     final_labels = label(final_threshed_heat)
+        # #     print('after redo', final_labels[1])
+        # #     plt.imshow(final_threshed_heat)
+        # #     plt.title('after redo')
+        # #     plt.show()
 
-        boxes.set_labels(final_labels[1])
-        # # print("final_labels", final_labels[1])
-        final_labeled_image, last_boxes = box_labels(img_copy, final_labels)
-        # plt.imshow(final_labeled_image)
-        # plt.title('with final perform')
-        # plt.show()
+        # boxes.set_labels(final_labels[1])
+        # # # print("final_labels", final_labels[1])
+        # final_labeled_image, last_boxes = box_labels(img_copy, final_labels)
+        # # plt.imshow(final_labeled_image)
+        # # plt.title('with final perform')
+        # # plt.show()
 
-        return final_labeled_image
-        # return hog_labeled_image
-    # process_image(image)
+        # return final_labeled_image
+        return hog_labeled_image
+    
+    process_image(image)
 
 
     # boxed_cars_vid = 'vids/project_output.mp4'
@@ -454,8 +449,8 @@ if __name__ == '__main__':
     
     # boxed_cars_vid = 'vids/test_output5.mp4'
     # clip = VideoFileClip('vids/test_video.mp4')
-    boxed_cars_vid = 'vids/pass_mini_output.mp4'
-    clip = VideoFileClip('vids/pass_mini.mp4')
+    # boxed_cars_vid = 'vids/pass_mini_output.mp4'
+    # clip = VideoFileClip('vids/pass_mini.mp4')
 
-    output_clip = clip.fl_image(process_image)
-    output_clip.write_videofile(boxed_cars_vid, audio=False)
+    # output_clip = clip.fl_image(process_image)
+    # output_clip.write_videofile(boxed_cars_vid, audio=False)
