@@ -330,7 +330,7 @@ if __name__ == '__main__':
 
     # ystart = 400
     # ystop = 656
-    scale = 1.5
+    scale = 1
     
     '''
     2) determine which values correspond to the same car-- do another heatmap? 
@@ -350,6 +350,7 @@ if __name__ == '__main__':
     def process_image(image):
         img_copy = np.copy(image)
         bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        print('hog found', len(bboxes))
         boxes.save_box(bboxes)
         arrs = boxes.get_orig()
         # print('length of boxes: ', len(arrs))
@@ -372,9 +373,11 @@ if __name__ == '__main__':
         # plt.show()
 
         # print('length of arr', len(arrs))
-        if len(arrs) < 3:
+        if len(bboxes) < 1 or len(arrs) < 2:
+            hog_threshed_heat = apply_thresh(hog_heatmap, 0)
+        elif len(arrs) < 3:
             hog_threshed_heat = apply_thresh(hog_heatmap, 2)
-        else: 
+        else:  
             hog_threshed_heat = apply_thresh(hog_heatmap, 5)
         # plt.imshow(hog_threshed_heat)
         # plt.title('threshed heatmap')
@@ -401,17 +404,18 @@ if __name__ == '__main__':
         # plt.show()
 
         final_heatmap = increment_heatmap(final_zero_img, all_finals)
-        # plt.imshow(final_heatmap)
-        # plt.title('final_heatmap')
-        # plt.show()
+        plt.imshow(final_heatmap)
+        plt.title('final_heatmap')
+        plt.show()
 
-        if len(final_arrs) < 5:
+        print('len final arrs', len(final_arrs))
+        if len(bboxes) < 1 or len(final_arrs) < 5:
             final_threshed_heat = apply_thresh(final_heatmap, 0)
         else: 
             final_threshed_heat = apply_thresh(final_heatmap, 3)
-        # plt.imshow(final_threshed_heat)
-        # plt.title('final threshed heatmap')
-        # plt.show()
+        plt.imshow(final_threshed_heat)
+        plt.title('final threshed heatmap')
+        plt.show()
 
         # # apply label() to get [heatmap_w/_labels, num_labels]
         final_labels = label(final_threshed_heat)
@@ -433,9 +437,9 @@ if __name__ == '__main__':
         boxes.set_labels(final_labels[1])
         # # print("final_labels", final_labels[1])
         final_labeled_image, last_boxes = box_labels(img_copy, final_labels)
-        # plt.imshow(final_labeled_image)
-        # plt.title('with final perform')
-        # plt.show()
+        plt.imshow(final_labeled_image)
+        plt.title('with final perform')
+        plt.show()
 
         return final_labeled_image
         # return hog_labeled_image
@@ -445,9 +449,11 @@ if __name__ == '__main__':
     # boxed_cars_vid = 'project_output.mp4'
     # clip = VideoFileClip('project_video.mp4')
     
-    boxed_cars_vid = 'test_output2.mp4'
-    clip = VideoFileClip('test_video.mp4')
+    # boxed_cars_vid = 'test_output3.mp4'
+    # clip = VideoFileClip('test_video.mp4')
 
+    boxed_cars_vid = 'short_pass_output.mp4'
+    clip = VideoFileClip('short_pass_vid.mp4')
 
     output_clip = clip.fl_image(process_image)
     output_clip.write_videofile(boxed_cars_vid, audio=False)
