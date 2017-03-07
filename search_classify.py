@@ -1,3 +1,4 @@
+import os
 import cv2
 import glob
 import time
@@ -168,6 +169,26 @@ class Boxes:
         return self.labels
 
 '''
+given a directory, return an array of all images in it
+'''
+def get_file_images(directory):
+  file_list = os.listdir(directory)
+  first_image = mpimg.imread(directory + '/' + file_list[1])
+  all_images = np.array([first_image])
+  # print('all_images shape', all_images.shape)
+
+  for img_num in range(2, len(file_list)):
+    img_name = file_list[img_num]
+    if not img_name.startswith('.'):
+      # print('img name is', img_name)
+      image = mpimg.imread(directory + '/' + img_name)
+      # undist_img = undist(image, mtx, dist)
+      all_images = np.append(all_images, np.array([image]), axis=0)
+
+  # print('final shape', all_images.shape)
+  return all_images
+
+'''
 for each image in array, print
 '''
 def show_images(images):
@@ -292,12 +313,12 @@ if __name__ == '__main__':
         # print('after save, Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
         # taken from one of images originally
 
-    # image = mpimg.imread('data/vehicles/GTI_Far/image0000.png')
     image = mpimg.imread('test_images/test4.jpg')
-    # print('image shape', image.shape[0])
     height = image.shape[0]
     y_start_stop = [int(height*4//8), height]
-    # print('ystart stop', y_start_stop)
+
+    all_tests = get_file_images('test_images')
+    show_images(all_tests)
 
     # draw_image = np.copy(image)
 
@@ -308,7 +329,7 @@ if __name__ == '__main__':
 
     # ystart = 400
     # ystop = 656
-    scale = 1.5
+    scale = 1
     
     '''
     2) determine which values correspond to the same car-- do another heatmap? 
@@ -440,7 +461,12 @@ if __name__ == '__main__':
         # return final_labeled_image
         return hog_labeled_image
     
-    process_image(image)
+    # count = 0
+    for img in all_tests:
+        # if count > 3:
+        boxes = Boxes()
+        process_image(img)
+        # count +=1 
 
 
     # boxed_cars_vid = 'vids/project_output.mp4'
