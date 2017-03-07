@@ -145,7 +145,7 @@ class Boxes:
     def save_box(self, box_list):
         self.max_3.append(box_list)
         # print('save box called, size now: ', len(self.max_3))
-        if len(self.max_3) > 3:
+        if len(self.max_3) > 6:
             throw_away = self.max_3.popleft()
             # print('get called to remove: ', throw_away)
 
@@ -317,8 +317,9 @@ if __name__ == '__main__':
     height = image.shape[0]
     y_start_stop = [int(height*4//8), height]
 
-    all_tests = get_file_images('test_images')
-    show_images(all_tests)
+    # to test images
+    # all_tests = get_file_images('test_images')
+    # show_images(all_tests)
 
     # draw_image = np.copy(image)
 
@@ -329,7 +330,6 @@ if __name__ == '__main__':
 
     # ystart = 400
     # ystop = 656
-    scale = 1
     
     '''
     2) determine which values correspond to the same car-- do another heatmap? 
@@ -356,13 +356,17 @@ if __name__ == '__main__':
     '''
     def process_image(image):
         img_copy = np.copy(image)
+        scale = 1
         out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-        print('hog found', len(bboxes))
-        plt.imshow(out_img)
-        plt.title('hog output')
-        plt.show()
+        # print('hog found', len(bboxes))
+        # plt.imshow(out_img)
+        # plt.title('hog output')
+        # plt.show()
+        scale = 1.5
+        out_img2, bboxes2 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
 
         boxes.save_box(bboxes)
+        boxes.save_box(bboxes2)
         arrs = boxes.get_orig()
 
         combo_box = []
@@ -381,13 +385,13 @@ if __name__ == '__main__':
         plt.show()
 
         # print('length of arr', len(arrs))
-        # if len(bboxes) < 1 or len(arrs) < 2:
-        #     hog_threshed_heat = apply_thresh(hog_heatmap, 0)
-        # elif len(arrs) < 3:
-        #     hog_threshed_heat = apply_thresh(hog_heatmap, 1)
-        # else:  
-        #     hog_threshed_heat = apply_thresh(hog_heatmap, 3)
-        hog_threshed_heat = apply_thresh(hog_heatmap, 1)
+        if len(arrs) < 3:
+            hog_threshed_heat = apply_thresh(hog_heatmap, 2)
+        elif len(arrs) < 5:
+            hog_threshed_heat = apply_thresh(hog_heatmap, 4)
+        else:  
+            hog_threshed_heat = apply_thresh(hog_heatmap, 6)
+
         plt.imshow(hog_threshed_heat)
         plt.title('threshed heatmap')
         plt.show()
@@ -461,22 +465,20 @@ if __name__ == '__main__':
         # return final_labeled_image
         return hog_labeled_image
     
-    # count = 0
-    for img in all_tests:
-        # if count > 3:
-        boxes = Boxes()
-        process_image(img)
+    # # count = 0
+    # for img in all_tests:
+    #     # if count > 1:
+    #     boxes = Boxes()
+    #     process_image(img)
         # count +=1 
 
 
     # boxed_cars_vid = 'vids/project_output.mp4'
     # clip = VideoFileClip('vids/project_video.mp4')
-    # VideoFileClip.cutout(ta, tb)
-    
-    # boxed_cars_vid = 'vids/test_output5.mp4'
-    # clip = VideoFileClip('vids/test_video.mp4')
-    # boxed_cars_vid = 'vids/pass_mini_output.mp4'
-    # clip = VideoFileClip('vids/pass_mini.mp4')
 
-    # output_clip = clip.fl_image(process_image)
-    # output_clip.write_videofile(boxed_cars_vid, audio=False)
+    boxed_cars_vid = 'vids/approach_output.mp4'
+    clip = VideoFileClip('vids/approach.mp4')
+    # VideoFileClip.cutout(ta, tb)
+
+    output_clip = clip.fl_image(process_image)
+    output_clip.write_videofile(boxed_cars_vid, audio=False)
