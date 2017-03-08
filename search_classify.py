@@ -145,7 +145,9 @@ class Boxes:
     def save_box(self, box_list):
         self.max_3.append(box_list)
         # print('save box called, size now: ', len(self.max_3))
-        if len(self.max_3) > 6:
+        if len(self.max_3) > 9:
+            throw_away = self.max_3.popleft()
+            throw_away = self.max_3.popleft()
             throw_away = self.max_3.popleft()
             # print('get called to remove: ', throw_away)
 
@@ -315,37 +317,9 @@ if __name__ == '__main__':
 
     image = mpimg.imread('test_images/test4.jpg')
     height = image.shape[0]
-    y_start_stop = [int(height*4//8), height]
+    y_start_stop = [int(height*3//8), height]
 
-    # to test images
-    # all_tests = get_file_images('test_images')
-    # show_images(all_tests)
-
-    # draw_image = np.copy(image)
-
-    # Uncomment the following line if you extracted training
-    # data from .png images (scaled 0 to 1 by mpimg) and the
-    # image you are searching is a .jpg (scaled 0 to 255)
-    # image = image.astype(np.float32)/255
-
-    # ystart = 400
-    # ystop = 656
-    
-    '''
-    2) determine which values correspond to the same car-- do another heatmap? 
-    3) average/ extrapolate after 3-5 frames
-
-
-    '''
     boxes = Boxes()
-    # bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-    # boxes.save_box(bboxes)
-    # arrs = boxes.get_orig()
-    # print('arrs are ', arrs)
-
-    # # plt.imshow(out_img)
-    # # plt.title('boxes')
-    # # plt.show()
 
     '''
     process image:
@@ -356,17 +330,23 @@ if __name__ == '__main__':
     '''
     def process_image(image):
         img_copy = np.copy(image)
-        scale = 1
+        scale = .7
         out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-        # print('hog found', len(bboxes))
+        print('hog found scale .7: ', len(bboxes))
         # plt.imshow(out_img)
         # plt.title('hog output')
         # plt.show()
-        scale = 1.5
+        scale = .8
         out_img2, bboxes2 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        print('hog found scale.8: ', len(bboxes2))
+
+        scale = .9
+        out_img3, bboxes3 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        print('hog found scale.9: ', len(bboxes3))
 
         boxes.save_box(bboxes)
         boxes.save_box(bboxes2)
+        boxes.save_box(bboxes3)
         arrs = boxes.get_orig()
 
         combo_box = []
@@ -384,13 +364,13 @@ if __name__ == '__main__':
         plt.title('hog_heatmap')
         plt.show()
 
-        # print('length of arr', len(arrs))
-        if len(arrs) < 3:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 2)
-        elif len(arrs) < 5:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 4)
+        print('length of arr', len(arrs))
+        if len(arrs) < 4:
+            hog_threshed_heat = apply_thresh(hog_heatmap, 1)
+        elif len(arrs) < 7:
+            hog_threshed_heat = apply_thresh(hog_heatmap, 1)
         else:  
-            hog_threshed_heat = apply_thresh(hog_heatmap, 6)
+            hog_threshed_heat = apply_thresh(hog_heatmap, 2)
 
         plt.imshow(hog_threshed_heat)
         plt.title('threshed heatmap')
@@ -465,7 +445,10 @@ if __name__ == '__main__':
         # return final_labeled_image
         return hog_labeled_image
     
-    # # count = 0
+    # to test images
+    # all_tests = get_file_images('test_images')
+    # show_images(all_tests)
+    # count = 0
     # for img in all_tests:
     #     # if count > 1:
     #     boxes = Boxes()
@@ -478,6 +461,8 @@ if __name__ == '__main__':
 
     boxed_cars_vid = 'vids/approach_output.mp4'
     clip = VideoFileClip('vids/approach.mp4')
+    # boxed_cars_vid = 'vids/test_output.mp4'
+    # clip = VideoFileClip('vids/test_video.mp4')
     # VideoFileClip.cutout(ta, tb)
 
     output_clip = clip.fl_image(process_image)
