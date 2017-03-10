@@ -321,7 +321,7 @@ if __name__ == '__main__':
         # plt.title('hog_heatmap')
         # plt.show()
 
-        print('length of arr', len(arrs))
+        # print('length of arr', len(arrs))
         if len(arrs) < 4:
             hog_threshed_heat = apply_thresh(hog_heatmap, 4)
         elif len(arrs) < 7:
@@ -355,8 +355,8 @@ if __name__ == '__main__':
     #     count +=1 
 
 
-    # boxed_cars_vid = 'vids/project_output.mp4'
-    # clip = VideoFileClip('vids/project_video.mp4')
+    boxed_cars_vid = 'vids/project_output.mp4'
+    clip = VideoFileClip('vids/project_video.mp4')
 
     # boxed_cars_vid = 'vids/pass_output.mp4'
     # clip = VideoFileClip('vids/pass.mp4')
@@ -364,8 +364,8 @@ if __name__ == '__main__':
     # clip = VideoFileClip('vids/emergence.mp4')
     # boxed_cars_vid = 'vids/approach_output.mp4'
     # clip = VideoFileClip('vids/approach.mp4')
-    boxed_cars_vid = 'vids/test_output.mp4'
-    clip = VideoFileClip('vids/test_video.mp4')
+    # boxed_cars_vid = 'vids/test_output.mp4'
+    # clip = VideoFileClip('vids/test_video.mp4')
     # VideoFileClip.cutout(ta, tb)
 
     output_clip = clip.fl_image(process_image)

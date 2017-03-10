@@ -25,13 +25,13 @@ Steps:
 
 get_hog_features(): Given the inputed number of orientations, number of pixels per cell, and numbers of cells per block (for block normalization), the hog features are taken and returned. Optionally, visualization is returned for visual testing. 
 
-Number of orientations, pixels per cell, and numbers of cells per block were all experimented with. Training accuracy was not significantly affected from changes, so the values were left at their defaults. 
+Number of orientations, pixels per cell, and numbers of cells per block were all experimented with. Training accuracy was not significantly affected from changes, so the values were left at their original starting values. 
 
 Optionally, use a histogram of colors with color_hist() and a feature vector of the colors themselves with bin_spatial() for training the SVC. Given that these add time to model training and did not significantly affect training scores, they are not used in the final product.
 
 extract_features(): Converts to the desired color spectrum and puts the hog_features and any other feature vectors together (no other feature vectors used in final product). 
 
-Through experimentation with YCrCb, YUV, HLS, HSV, and RGB color spectrums, the YCrCb was found to be optimal for training the SVC (all three color channels). This is interesting since the Y channel appears to have significant differences between cars and non-cars, whereas the Cr and Cb seem to carry little value, but using their channels does improve training accuracy.
+Through experimentation with YCrCb, YUV, HLS, HSV, and RGB color spectrums, the YCrCb was found to be optimal for training the SVC (all three color channels). This is interesting since the Y channel appears to have significant differences between cars and non-cars, whereas the Cr and Cb seem to carry little value, but using all three channels does improve training accuracy over just the Y channel.
 
 ###2. Normalize features, randomize, and train a Linear SVM classifier 
 
@@ -53,7 +53,9 @@ A linear SVM classifier is fit to the data, and a prediction is output. The fina
 
 find_cars(): Given an image and the parameters mentioned above that were used to train the model, the hog features (and optionally other features) are calculated for the 3 color channels (Y, Cr, Cb). 
 
-Then, a sliding window is run across the bottom half of the image (to avoid false positives in the sky). For that given sliding window, the hog features for that part are taken out, and any cars that are found are bound with a box. This box can optionally be drawn onto the image for visual testing, but in the final implementation is added to the list of all bounding boxes and returned.
+Then, a sliding window is run across the bottom right quarter of the image (to avoid false positives in the sky and left side of road). For that given sliding window, the hog features for that part are taken out, and any cars that are found are bound with a box. This box can optionally be drawn onto the image for visual testing, but in the final implementation is added to the list of all bounding boxes and returned.
+
+Scales from .5 to 5 were experimented with, with .5 scales having very small windows and 5 having very large. Through experimentation, it was found that using 3 sliding windows at .9, 1, and 1.5 scales, we could find cars while not having too many false positives.
 
 An example image with all of the hog bounding boxes drawn on it:
 ![alt tag](./output_images/hog.png)
@@ -62,7 +64,7 @@ An example image with all of the hog bounding boxes drawn on it:
 
 **search_classify.py:**
 
-class Boxes() defines a class for keeping track of the last three sets of bounding boxes. It uses a deque for efficient push/ pop in keeping track of the time series data. The three most recent bounding boxes are combined, and used to create the heatmap.
+class Boxes() defines a class for keeping track of the last three sets of bounding boxes. It uses a deque for efficient push/ pop in keeping track of the time series data. The nine most recent bounding boxes are combined (3 frames x 3 different scaled sliding window extractions), and used to create the heatmap.
 
 zero_img is a blank image for creating a heatmap. 
 
@@ -71,7 +73,9 @@ increment_heatmap(): takes in the blank image and the list of bounding boxes, an
 An example image's heatmap:
 ![alt tag](./output_images/heatmap.png)
 
-apply_thresh(): applies a threshold of this frequency to prevent false-positives from occuring. Guess and test was used to find that 7 worked well to prevent incorrect classifications from appearing to the car as other vehicles. 
+apply_thresh(): applies a threshold of this frequency to prevent false-positives from occuring. Guess and test was used to find that 4 worked well to prevent incorrect classifications from appearing to the car as other vehicles. 
+
+Additionally, the left half of the image was removed from consideration after it was found that there were many false positives from the left side.
 
 An example image after the thresholding:
 ![alt tag](./output_images/thresholded_heatmap.png)
@@ -107,6 +111,8 @@ the final result is output as project_output.mp4
 1. The code effectively identifies and tracks vehicles, but future improvements might include creating a better bounding box for each car, and increasing the threshold to remove any false positives. Furthermore, the split between training and testing data could be improved as time-series data was randomly split. This resulted in almost identical images being used for both training and testing, allowing for overfitting based on arbitrary characteristics of the images. 
 
 1. Additionally, further research should be performed on more modern techniques for finding vehicles in images, including YOLO. 
+
+1. Finally, this pipeline would likely fail at dusk or in adverse conditions, when the images of cars and not-cars may appear more similar or with more noise. We would have to test this pipeline on those videos and determine what differences there are.
 
 ---
 
