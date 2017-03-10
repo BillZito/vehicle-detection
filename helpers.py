@@ -10,9 +10,7 @@ visualize def. false, feature vec (all along single access True)
 
 output: the features (and potentially the hog image itself)
 
-TODO: 
-1. change this to only do bottom half
-2. set transform_sqrt=True and remove neg numb
+TODO: set transform_sqrt=True and remove neg numb
 '''
 def get_hog_features(img, orient, pix_per_cell, cell_per_block, 
                         vis=False, feature_vec=True):
@@ -23,7 +21,6 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                                   cells_per_block=(cell_per_block, cell_per_block), 
                                   transform_sqrt=False, 
                                   visualise=vis, feature_vector=feature_vec)
-        #TODO: set transform_sqrt=True and remove neg numb
         return features, hog_image
     # Otherwise call with one output
     else:      
@@ -32,13 +29,12 @@ def get_hog_features(img, orient, pix_per_cell, cell_per_block,
                        cells_per_block=(cell_per_block, cell_per_block), 
                        transform_sqrt=False, 
                        visualise=vis, feature_vector=feature_vec)
-        #TODO: set transform_sqrt=True and remove neg numb
         return features
 
 '''
 Convert image to one-d feature fector (with resize based on bins)--getting super small sample of img
 
-TODO: test if we can get the spatial resolution lower with same accuracy-have tried 20/20
+TODO: test if we can get the spatial resolution lower with same accuracy-(have tried 20/20 successfully)
 '''
 def bin_spatial(img, size=(32, 32)):
     small_img = cv2.resize(img, size)
@@ -47,7 +43,6 @@ def bin_spatial(img, size=(32, 32)):
 
 '''
 Define a function to compute color histogram features 
-NEED TO CHANGE bins_range if reading .png files with mpimg!
 '''
 def color_hist(img, nbins=32, bins_range=(0, 256)):
     # Compute the histogram of the color channels separately
@@ -56,10 +51,6 @@ def color_hist(img, nbins=32, bins_range=(0, 256)):
     channel3_hist = np.histogram(img[:,:,2], bins=nbins, range=bins_range)
     # Concatenate the histograms into a single feature vector
     hist_features = np.concatenate((channel1_hist[0], channel2_hist[0], channel3_hist[0]))
-    # print('histfeatures shape', hist_features.shape)
-    # hist_features = np.reshape(hist_features, (1, hist_features.shape[0]))
-    # print('hist features after reshape', hist_features.shape)
-    # Return the individual histograms, bin_centers and feature vector
     return hist_features
 
 '''
@@ -70,16 +61,11 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
                         hist_bins=32, orient=9, 
                         pix_per_cell=8, cell_per_block=2, hog_channel=0,
                         spatial_feat=True, hist_feat=True, hog_feat=True):
-    # Create a list to append feature vectors to
     features = []
-    # Iterate through the list of images
     for file in imgs:
         file_features = []
-        # Read in each one by one
         image = cv2.imread(file)
-        # plt.imshow(image)
-        # plt.show()
-        # apply color conversion if other than 'RGB'
+
         if color_space != 'RGB':
             if color_space == 'HSV':
                 feature_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
@@ -92,10 +78,6 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
             elif color_space == 'YCrCb':
                 feature_image = cv2.cvtColor(image, cv2.COLOR_BGR2YCrCb)
         else: feature_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)      
-
-        # plt.imshow(feature_image)
-        # plt.title('corrected')
-        # plt.show()
 
         if spatial_feat == True:
             spatial_features = bin_spatial(feature_image, size=spatial_size)
@@ -119,5 +101,5 @@ def extract_features(imgs, color_space='RGB', spatial_size=(32, 32),
             # Append the new feature vector to the features list
             file_features.append(hog_features)
         features.append(np.concatenate(file_features))
-    # Return list of feature vectors
+
     return features

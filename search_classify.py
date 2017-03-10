@@ -91,14 +91,6 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     # return draw_img, window_list
 
 '''
-Combine duplicate bounding boxes and remove false positives.
-1. add a pixel val for each bounding box found using a heatmap
-2. apply a threshold on number of pixel vals to remove false positives (if only a few bounding boxes)
-3. label the bounding boxes using scipy to identify separate boxes
-4. apply new bounding boxes to each of labeled boxes
-'''
-
-'''
 given an image, add a pixel val for each place place in the bounding box
 '''
 def increment_heatmap(heatmap, bbox_list):
@@ -119,7 +111,6 @@ def apply_thresh(heatmap, thresh):
 apply new bounding boxes based on the labeled boxes
 '''
 def box_labels(img, labels):
-    # for number of labels
     final_boxes = []
     for label in range(1, labels[1] + 1):
         # get the vals that apply just to that label
@@ -127,46 +118,30 @@ def box_labels(img, labels):
         nonzero_y = np.array(curr_points[0])
         nonzero_x = np.array(curr_points[1])
 
-
         bbox = ((np.min(nonzero_x), np.min(nonzero_y)), (np.max(nonzero_x), np.max(nonzero_y)))
         final_boxes.append(bbox)
         cv2.rectangle(img, bbox[0], bbox[1], (0, 0, 255), 6)
 
     return img, final_boxes
 
+'''
+Boxes tracks the last 9 sets of found boxing boxes (3 per scale)
+'''
 class Boxes:
     def __init__(self):
         self.max_3 = deque()
-        self.found_5 = deque()
         self.labels = 0
 
     def save_box(self, box_list):
         self.max_3.append(box_list)
-        # print('save box called, size now: ', len(self.max_3))
+
         if len(self.max_3) > 9:
             throw_away = self.max_3.popleft()
             throw_away = self.max_3.popleft()
             throw_away = self.max_3.popleft()
-            # print('get called to remove: ', throw_away)
-
-    def save_final(self, box_list):
-        self.found_5.append(box_list)
-        # print('save final called, size now', len(self.found_5))
-
-        if len(self.found_5) > 8:
-            throw_away = self.found_5.popleft()
-
-    def set_labels(self, num):
-        self.labels = num
 
     def get_orig(self):
         return self.max_3
-
-    def get_finals(self):
-        return self.found_5
-
-    def get_labels(self):
-        return self.labels
 
 '''
 given a directory, return an array of all images in it
@@ -175,17 +150,13 @@ def get_file_images(directory):
   file_list = os.listdir(directory)
   first_image = mpimg.imread(directory + '/' + file_list[1])
   all_images = np.array([first_image])
-  # print('all_images shape', all_images.shape)
 
   for img_num in range(2, len(file_list)):
     img_name = file_list[img_num]
     if not img_name.startswith('.'):
-      # print('img name is', img_name)
       image = mpimg.imread(directory + '/' + img_name)
-      # undist_img = undist(image, mtx, dist)
       all_images = np.append(all_images, np.array([image]), axis=0)
 
-  # print('final shape', all_images.shape)
   return all_images
 
 '''
@@ -193,7 +164,7 @@ for each image in array, print
 '''
 def show_images(images):
   fig = plt.figure()
-  for num in range(1, len(images)):
+  for num in range(0, len(images)):
     image = images[num]
     fig.add_subplot(3, 3, num)
     plt.title(num)
@@ -203,7 +174,7 @@ def show_images(images):
 
 
 if __name__ == '__main__':
-    color_space = 'YCrCb' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
+    color_space = 'YCrCb' 
     orient = 9  # HOG orientations
     pix_per_cell = 8 # HOG pixels per cell
     cell_per_block = 2 # HOG cells per block
@@ -214,8 +185,9 @@ if __name__ == '__main__':
     hist_feat = False # Histogram features on or off
     hog_feat = True # HOG features on or off
 
-    # number of model
+    # number of model to be run and/or saved
     num = '10'
+    # boolean for checking 500 subsamples of training data for quick check
     mini = False
     # boolean for training svm model or just doing sliding windows functionality
     needs_training = False
@@ -315,28 +287,23 @@ if __name__ == '__main__':
     4) draws ideal boxes around each of those sets
     '''
     def process_image(image):
-        img_copy = np.copy(image)
         scale = .9
-        out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-        print('hog found scale .9: ', len(bboxes))
+        # bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        # print('hog found scale .9: ', len(bboxes))
+        # out_img, bboxes = ...
         # plt.imshow(out_img)
         # plt.title('hog output')
         # plt.show()
+
         scale = 1
-        out_img2, bboxes2 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        bboxes2 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         print('hog found scale 1: ', len(bboxes2))
-        # plt.imshow(out_img2)
-        # plt.title('hog output')
-        # plt.show()
 
         scale = 1.5
-        out_img3, bboxes3 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        bboxes3 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         print('hog found scale 1.5: ', len(bboxes3))
-        # plt.imshow(out_img3)
-        # plt.title('hog output')
-        # plt.show()
 
-        boxes.save_box(bboxes)
+        # boxes.save_box(bboxes)
         boxes.save_box(bboxes2)
         boxes.save_box(bboxes3)
         arrs = boxes.get_orig()
@@ -346,7 +313,6 @@ if __name__ == '__main__':
             combo_box += box_list
 
         hog_zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
-        # # [:, :, 0]-- first : is first dimension, second : is second, 0 is only the r in rgb 3rd d
         # # plt.imshow(hog_zero_img)
         # # plt.title('empty')
         # # plt.show()
@@ -358,9 +324,9 @@ if __name__ == '__main__':
 
         print('length of arr', len(arrs))
         if len(arrs) < 4:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 2)
+            hog_threshed_heat = apply_thresh(hog_heatmap, 6)
         elif len(arrs) < 7:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 2)
+            hog_threshed_heat = apply_thresh(hog_heatmap, 3)
         else:  
             hog_threshed_heat = apply_thresh(hog_heatmap, 3)
 
@@ -382,12 +348,12 @@ if __name__ == '__main__':
     # to test images
     all_tests = get_file_images('test_images')
     show_images(all_tests)
-    # count = 0
+    count = 0
     for img in all_tests:
-    #     # if count > 1:
-        boxes = Boxes()
-        process_image(img)
-        # count +=1 
+        if count > 0:
+            boxes = Boxes()
+            process_image(img)
+        count +=1 
 
 
     # boxed_cars_vid = 'vids/project_output.mp4'
