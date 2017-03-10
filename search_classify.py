@@ -21,10 +21,10 @@ from helpers import *
 -determines features and predicts if those features are a car in each box
 -output: list of bounding boxes where cars were predicted
 '''
-def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
+def find_cars(img, xstart, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
     draw_img = np.copy(img)
     
-    img_tosearch = img[ystart:ystop,:,:]
+    img_tosearch = img[ystart:ystop,xstart:,:]
     ctrans_tosearch = cv2.cvtColor(img_tosearch, cv2.COLOR_RGB2YCrCb);
     if scale != 1:
         imshape = ctrans_tosearch.shape
@@ -82,9 +82,10 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
                 xbox_left = np.int(xleft*scale)
                 ytop_draw = np.int(ytop*scale)
                 win_draw = np.int(window*scale)
-                bbox = ((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart))
+                bbox = ((xbox_left+xstart, ytop_draw+ystart),(xbox_left+win_draw+xstart,ytop_draw+win_draw+ystart))
                 # cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6) 
-                window_list.append(((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)))
+                window_list.append(bbox)
+                # window_list.append(((xbox_left+xstart, ytop_draw+ystart),(xbox_left+win_draw+xstart,ytop_draw+win_draw+ystart)))
 
     return window_list
     # to visualize, return draw_img as well
@@ -166,7 +167,7 @@ def show_images(images):
   fig = plt.figure()
   for num in range(0, len(images)):
     image = images[num]
-    fig.add_subplot(3, 3, num)
+    fig.add_subplot(3, 3, num + 1)
     plt.title(num)
     plt.imshow(image, cmap='gray')
 
@@ -275,7 +276,8 @@ if __name__ == '__main__':
 
     image = mpimg.imread('test_images/test4.jpg')
     height = image.shape[0]
-    y_start_stop = [int(height*3//8), height]
+    y_start_stop = [int(height*4//8), height]
+    x_start = 600
 
     boxes = Boxes()
 
@@ -288,7 +290,7 @@ if __name__ == '__main__':
     '''
     def process_image(image):
         scale = .9
-        # bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        bboxes = find_cars(image, x_start, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
         # print('hog found scale .9: ', len(bboxes))
         # out_img, bboxes = ...
         # plt.imshow(out_img)
@@ -296,14 +298,14 @@ if __name__ == '__main__':
         # plt.show()
 
         scale = 1
-        bboxes2 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-        print('hog found scale 1: ', len(bboxes2))
+        bboxes2 = find_cars(image, x_start, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        # print('hog found scale 1: ', len(bboxes2))
 
         scale = 1.5
-        bboxes3 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-        print('hog found scale 1.5: ', len(bboxes3))
+        bboxes3 = find_cars(image, x_start, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
+        # print('hog found scale 1.5: ', len(bboxes3))
 
-        # boxes.save_box(bboxes)
+        boxes.save_box(bboxes)
         boxes.save_box(bboxes2)
         boxes.save_box(bboxes3)
         arrs = boxes.get_orig()
@@ -313,56 +315,57 @@ if __name__ == '__main__':
             combo_box += box_list
 
         hog_zero_img = np.zeros_like(image[:, :, 0].astype(np.float))
-        # # plt.imshow(hog_zero_img)
-        # # plt.title('empty')
-        # # plt.show()
 
         hog_heatmap = increment_heatmap(hog_zero_img, combo_box)
-        plt.imshow(hog_heatmap)
-        plt.title('hog_heatmap')
-        plt.show()
+        # plt.imshow(hog_heatmap)
+        # plt.title('hog_heatmap')
+        # plt.show()
 
         print('length of arr', len(arrs))
         if len(arrs) < 4:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 6)
+            hog_threshed_heat = apply_thresh(hog_heatmap, 4)
         elif len(arrs) < 7:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 3)
+            hog_threshed_heat = apply_thresh(hog_heatmap, 4)
         else:  
-            hog_threshed_heat = apply_thresh(hog_heatmap, 3)
+            hog_threshed_heat = apply_thresh(hog_heatmap, 4)
 
-        plt.imshow(hog_threshed_heat)
-        plt.title('threshed heatmap')
-        plt.show()
+        # plt.imshow(hog_threshed_heat)
+        # plt.title('threshed heatmap')
+        # plt.show()
 
         # # apply label() to get [heatmap_w/_labels, num_labels]
         hog_labels = label(hog_threshed_heat)
         # # print("hog_labels", hog_labels[1])
         hog_labeled_image, final_boxes = box_labels(image, hog_labels)
-        plt.imshow(hog_labeled_image)
-        plt.title('with labeled cars')
-        plt.show()
+        # plt.imshow(hog_labeled_image)
+        # plt.title('with labeled cars')
+        # plt.show()
 
         # return final_labeled_image
         return hog_labeled_image
     
     # to test images
-    all_tests = get_file_images('test_images')
-    show_images(all_tests)
-    count = 0
-    for img in all_tests:
-        if count > 0:
-            boxes = Boxes()
-            process_image(img)
-        count +=1 
+    # all_tests = get_file_images('test_images')
+    # show_images(all_tests)
+    # count = 0
+    # for img in all_tests:
+    #     if count > 0:
+    #         boxes = Boxes()
+    #         process_image(img)
+    #     count +=1 
 
 
     # boxed_cars_vid = 'vids/project_output.mp4'
     # clip = VideoFileClip('vids/project_video.mp4')
 
+    # boxed_cars_vid = 'vids/pass_output.mp4'
+    # clip = VideoFileClip('vids/pass.mp4')
+    # boxed_cars_vid = 'vids/emergence_output.mp4'
+    # clip = VideoFileClip('vids/emergence.mp4')
     # boxed_cars_vid = 'vids/approach_output.mp4'
     # clip = VideoFileClip('vids/approach.mp4')
-    # boxed_cars_vid = 'vids/test_output.mp4'
-    # clip = VideoFileClip('vids/test_video.mp4')
+    boxed_cars_vid = 'vids/test_output.mp4'
+    clip = VideoFileClip('vids/test_video.mp4')
     # VideoFileClip.cutout(ta, tb)
 
     output_clip = clip.fl_image(process_image)
