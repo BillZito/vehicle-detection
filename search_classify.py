@@ -16,14 +16,16 @@ from sklearn.model_selection import train_test_split
 
 from helpers import *
 
-    
+'''
+-input: image, scale, feature-creating operations, and pix_per_cell dimensions for checking for features
+-determines features and predicts if those features are a car in each box
+-output: list of bounding boxes where cars were predicted
+'''
 def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins):
     draw_img = np.copy(img)
-    # img = img.astype(np.float32)/255
     
     img_tosearch = img[ystart:ystop,:,:]
     ctrans_tosearch = cv2.cvtColor(img_tosearch, cv2.COLOR_RGB2YCrCb);
-    # ctrans_tosearch = convert_color(img_tosearch, conv='RGB2YCrCb')
     if scale != 1:
         imshape = ctrans_tosearch.shape
         ctrans_tosearch = cv2.resize(ctrans_tosearch, (np.int(imshape[1]/scale), np.int(imshape[0]/scale)))
@@ -32,7 +34,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     ch2 = ctrans_tosearch[:,:,1]
     ch3 = ctrans_tosearch[:,:,2]
 
-    # Define blocks and steps as above
+    # Define blocks and steps based on length of image / pix per cell
     nxblocks = (ch1.shape[1] // pix_per_cell)-1
     nyblocks = (ch1.shape[0] // pix_per_cell)-1 
     nfeat_per_block = orient*cell_per_block**2
@@ -50,6 +52,7 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
     
     window_list = []
 
+    # move through each block, extracting hog features that apply
     for xb in range(nxsteps):
         for yb in range(nysteps):
             ypos = yb*cells_per_step
@@ -69,28 +72,23 @@ def find_cars(img, ystart, ystop, scale, svc, X_scaler, orient, pix_per_cell, ce
             # Get color features
             spatial_features = bin_spatial(subimg, size=spatial_size)
             hist_features = color_hist(subimg, nbins=hist_bins)
-            # print('spatial', spatial_features.shape)
-            # print('hist', hist_features.shape)
-            # print('hog', hog_features.shape)
-            # Scale features and make a prediction
-            # test1 = np.hstack((spatial_features, hog_features)).reshape(1, -1)
-            # print('test1', test1.shape)
             test_features = X_scaler.transform(np.hstack((hog_features)).reshape(1, -1))
+            # if spatial and hist_bins set to true, need to hstack those features
             # test_features = X_scaler.transform(np.hstack((spatial_features, hist_features, hog_features)).reshape(1, -1))    
-            #test_features = X_scaler.transform(np.hstack((shape_feat, hist_feat)).reshape(1, -1))    
             test_prediction = svc.predict(test_features)
             
+            #when predict a car, draw it and add bounding box to list
             if test_prediction == 1:
                 xbox_left = np.int(xleft*scale)
                 ytop_draw = np.int(ytop*scale)
                 win_draw = np.int(window*scale)
                 bbox = ((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart))
-                # print('bbox', bbox[0], bbox[1])
-                cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6) 
+                # cv2.rectangle(draw_img,(xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart),(0,0,255),6) 
                 window_list.append(((xbox_left, ytop_draw+ystart),(xbox_left+win_draw,ytop_draw+win_draw+ystart)))
 
-    # return window_list
-    return draw_img, window_list
+    return window_list
+    # to visualize, return draw_img as well
+    # return draw_img, window_list
 
 '''
 Combine duplicate bounding boxes and remove false positives.
@@ -238,16 +236,6 @@ if __name__ == '__main__':
             ' non-cars')
         print('ofsize: ', car_image.shape, 'and data type', car_image.dtype)
 
-        # if want to visualize car/not car, uncomment
-        # fig = plt.figure()
-        # plt.subplot(121)
-        # plt.imshow(car_image)
-        # plt.title('example car')
-        # plt.subplot(122)
-        # plt.imshow(notcar_image)
-        # plt.title('example not-car')
-        # plt.show()
-
         if mini:
             sample_size = 500
             cars = cars[0:sample_size]
@@ -293,8 +281,6 @@ if __name__ == '__main__':
         print(round(t2-t, 2), 'Seconds to train SVC...')
         # Check the score of the SVC
         print('Test Accuracy of SVC = ', round(svc.score(X_test, y_test), 4))
-        # Check the prediction time for a single sample
-        # t = time.time()
 
         
         # save image
@@ -330,19 +316,25 @@ if __name__ == '__main__':
     '''
     def process_image(image):
         img_copy = np.copy(image)
-        scale = .7
+        scale = .9
         out_img, bboxes = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-        print('hog found scale .7: ', len(bboxes))
+        print('hog found scale .9: ', len(bboxes))
         # plt.imshow(out_img)
         # plt.title('hog output')
         # plt.show()
-        scale = .8
+        scale = 1
         out_img2, bboxes2 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-        print('hog found scale.8: ', len(bboxes2))
+        print('hog found scale 1: ', len(bboxes2))
+        # plt.imshow(out_img2)
+        # plt.title('hog output')
+        # plt.show()
 
-        scale = .9
+        scale = 1.5
         out_img3, bboxes3 = find_cars(image, y_start_stop[0], y_start_stop[1], scale, svc, X_scaler, orient, pix_per_cell, cell_per_block, spatial_size, hist_bins)
-        print('hog found scale.9: ', len(bboxes3))
+        print('hog found scale 1.5: ', len(bboxes3))
+        # plt.imshow(out_img3)
+        # plt.title('hog output')
+        # plt.show()
 
         boxes.save_box(bboxes)
         boxes.save_box(bboxes2)
@@ -366,11 +358,11 @@ if __name__ == '__main__':
 
         print('length of arr', len(arrs))
         if len(arrs) < 4:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 1)
-        elif len(arrs) < 7:
-            hog_threshed_heat = apply_thresh(hog_heatmap, 1)
-        else:  
             hog_threshed_heat = apply_thresh(hog_heatmap, 2)
+        elif len(arrs) < 7:
+            hog_threshed_heat = apply_thresh(hog_heatmap, 2)
+        else:  
+            hog_threshed_heat = apply_thresh(hog_heatmap, 3)
 
         plt.imshow(hog_threshed_heat)
         plt.title('threshed heatmap')
@@ -384,83 +376,25 @@ if __name__ == '__main__':
         plt.title('with labeled cars')
         plt.show()
 
-
-
-        '''
-        attempted averaging of best box
-        '''
-        # boxes.save_final(final_boxes)
-
-        # final_arrs = boxes.get_finals()
-
-        # all_finals = []
-        # for box_list in final_arrs:
-        #     all_finals += box_list
-
-        # final_zero_img = np.zeros_like(img_copy[:, :, 0].astype(np.float))
-        # # plt.imshow(final_zero_img)
-        # # plt.title('empty')
-        # # plt.show()
-
-        # final_heatmap = increment_heatmap(final_zero_img, all_finals)
-        # # plt.imshow(final_heatmap)
-        # # plt.title('final_heatmap')
-        # # plt.show()
-
-        # final_threshed_heat = apply_thresh(final_heatmap, 0)
-
-        # print('len final arrs', len(final_arrs))
-        # if len(bboxes) < 1 or len(final_arrs) < 5:
-        #     final_threshed_heat = apply_thresh(final_heatmap, 0)
-        # else: 
-        #     final_threshed_heat = apply_thresh(final_heatmap, 3)
-        # plt.imshow(final_threshed_heat)
-        # plt.title('final threshed heatmap')
-        # plt.show()
-
-        # # apply label() to get [heatmap_w/_labels, num_labels]
-        # final_labels = label(final_threshed_heat)
-
-        # # if less labels, make sure aren't filtering too much
-        # # print('final labels', final_labels[1], 'prev labels', boxes.get_labels())
-        # # if final_labels[1] < boxes.get_labels():
-        # #     # plt.imshow(final_heatmap)
-        # #     # plt.title('final_heatmap')
-        # #     # plt.show()
-
-        # #     final_threshed_heat = apply_thresh(final_heatmap, 0)
-        # #     final_labels = label(final_threshed_heat)
-        # #     print('after redo', final_labels[1])
-        # #     plt.imshow(final_threshed_heat)
-        # #     plt.title('after redo')
-        # #     plt.show()
-
-        # boxes.set_labels(final_labels[1])
-        # # # print("final_labels", final_labels[1])
-        # final_labeled_image, last_boxes = box_labels(img_copy, final_labels)
-        # # plt.imshow(final_labeled_image)
-        # # plt.title('with final perform')
-        # # plt.show()
-
         # return final_labeled_image
         return hog_labeled_image
     
     # to test images
-    # all_tests = get_file_images('test_images')
-    # show_images(all_tests)
+    all_tests = get_file_images('test_images')
+    show_images(all_tests)
     # count = 0
-    # for img in all_tests:
+    for img in all_tests:
     #     # if count > 1:
-    #     boxes = Boxes()
-    #     process_image(img)
+        boxes = Boxes()
+        process_image(img)
         # count +=1 
 
 
     # boxed_cars_vid = 'vids/project_output.mp4'
     # clip = VideoFileClip('vids/project_video.mp4')
 
-    boxed_cars_vid = 'vids/approach_output.mp4'
-    clip = VideoFileClip('vids/approach.mp4')
+    # boxed_cars_vid = 'vids/approach_output.mp4'
+    # clip = VideoFileClip('vids/approach.mp4')
     # boxed_cars_vid = 'vids/test_output.mp4'
     # clip = VideoFileClip('vids/test_video.mp4')
     # VideoFileClip.cutout(ta, tb)
