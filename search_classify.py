@@ -355,8 +355,8 @@ if __name__ == '__main__':
     #     count +=1 
 
 
-    boxed_cars_vid = 'vids/project_output.mp4'
-    clip = VideoFileClip('vids/project_video.mp4')
+    boxed_cars_vid = 'vids/project_output2.mp4'
+    clip = VideoFileClip('vids/project_video.mp4').cutout(0, 12.45)
 
     # boxed_cars_vid = 'vids/pass_output.mp4'
     # clip = VideoFileClip('vids/pass.mp4')
@@ -366,7 +366,6 @@ if __name__ == '__main__':
     # clip = VideoFileClip('vids/approach.mp4')
     # boxed_cars_vid = 'vids/test_output.mp4'
     # clip = VideoFileClip('vids/test_video.mp4')
-    # VideoFileClip.cutout(ta, tb)
 
     output_clip = clip.fl_image(process_image)
     output_clip.write_videofile(boxed_cars_vid, audio=False)

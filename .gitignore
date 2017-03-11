@@ -1,5 +1,5 @@
 data/*
 __pycache__/*
 models/*
-*.mp4
+vids/*
 test_difficult/*

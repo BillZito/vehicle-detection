@@ -5,7 +5,7 @@
 ---
 
 ## Overview ##
-In a video, finds the cars and tracks their movement. Input is project_video, output is project_output.mp4
+In a video, finds the cars and tracks their movement. Input is project_video, output is in two parts, project_output1.mp4 and project_output2.mp4
 
 Steps: 
 
@@ -93,7 +93,7 @@ Giving us a final image with nice bounding boxes:
 
 process_image() is performed on each image in the video. It combines the steps laid out previously, calculating the bounding boxes based on sliding windows and hog features, and then using heatmaps to remove false positives and combine duplicates. 
 
-the final result is output as project_output.mp4
+the final result is output as project_output1.mp4 and project_output2.mp4
 
 
 ---
